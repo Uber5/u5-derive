@@ -7,7 +7,7 @@ const updateCache = (cache, domain, key) => {
 
   const findManyAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
-    console.log(`findManyAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
+    // console.log(`findManyAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
 
     const loader = cache.getLoader(other)
 
@@ -16,26 +16,25 @@ const updateCache = (cache, domain, key) => {
     }).toArray())
     .then(otherInstances => {
 
-      console.log('findManyAndTraverse, otherInstances', otherInstances.map(i => i._id))
+      // console.log('findManyAndTraverse, otherInstances', otherInstances.map(i => i._id))
 
       otherInstances.forEach(i => loader.prime(i._id, i))
       self[otherDef.as || other] = many ? otherInstances : (otherInstances.length > 0 ? otherInstances[0] : null)
       return otherInstances
     })
     .then(otherInstances => Promise.all(
-      otherInstances.map(i => traverse(other, i._id))
+      otherInstances.map(i => traverseToLoad(other, i._id))
     ))
   }
 
-  function traverse(type, key) {
+  function traverseToLoad(type, key) {
     const loader = cache.getLoader(type)
-    console.log('traverse', type, key)
+    console.log('traverseToLoad', type, key)
     return loader.load(key)
     .then(self => {
       const typeDef = domain.types[type]
       const { hasMany, hasOne } = typeDef
 
-      console.log('traverse, self', self)
       if (self.__loaded) {
         console.log('Breaking recursion?', type, key)
         return Promise.resolve()
@@ -58,23 +57,49 @@ const updateCache = (cache, domain, key) => {
     })
   }
 
-  return traverse(domain.root, key)
+  return traverseToLoad(domain.root, key)
 }
 
 const derive = (cache, domain, key) => {
 
-  function traverse(type, key) {
-    const loader = cache.getLoader(type)
-    return loader.load(key)
-    .then(self => {
-      const typeDef = domain.types[type]
-      const { hasMany, hasOne } = typeDef
-      console.log('derive.traverse, self', self)
-      // ...
-    })
+  function traverse(type, o, cb) {
+
+    const traverseAssocication = (self, type, typeDef, other, otherDef, many = true) => {
+      const others = self[otherDef.as || other]
+      // console.log('findAndTraverse, others', others)
+      if (many) {
+        others.map(instance => traverse(other, instance, cb))
+      } else {
+        if (others) { // could be null
+          return traverse(other, others, cb)
+        }
+      }
+    }
+
+    console.log('traverse (cb)', type, o)
+    cb(o)
+
+    const typeDef = domain.types[type]
+    const { hasMany, hasOne } = typeDef
+    // console.log('derive.traverse, o', o)
+    Object.keys(hasMany || {})
+    .map(otherTypeName => traverseAssocication(
+      o, type, typeDef, otherTypeName, hasOne[otherTypeName]
+    ))
+
+    Object.keys(hasOne || {})
+    .map(otherTypeName => traverseAssocication(
+      o, type, typeDef, otherTypeName, hasOne[otherTypeName], false
+    ))
   }
 
-  return traverse(domain.root, key)
+  const loader = cache.getLoader(domain.root)
+  return loader.load(key)
+  .then(self => {
+    traverse(domain.root, self, o => {
+      console.log('DERIVE?', o)
+    })
+  })
 }
 
 export default (cache, domain, key) => updateCache(cache, domain, key)

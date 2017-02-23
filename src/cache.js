@@ -6,7 +6,7 @@ mongo.then(db => console.log('connected', db.databaseName))
 
 const load = type => keys => mongo
 .then(db => {
-  console.log('should load', type, keys, keys.map(key => ObjectId(key)))
+  // console.log('should load', type, keys, keys.map(key => ObjectId(key)))
   return db
 })
 .then(db => db.collection(type).find({
