@@ -5,7 +5,7 @@ const updateCache = (cache, domain, key) => {
 
   const rootLoader = cache.getLoader(domain.root)
 
-  const findManyAndTraverse = (self, type, typeDef, other, otherDef) => {
+  const findManyAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
     console.log(`findManyAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
 
@@ -19,7 +19,7 @@ const updateCache = (cache, domain, key) => {
       console.log('findManyAndTraverse, otherInstances', otherInstances.map(i => i._id))
 
       otherInstances.forEach(i => loader.prime(i._id, i))
-      self[other] = otherInstances
+      self[otherDef.as || other] = many ? otherInstances : (otherInstances.length > 0 ? otherInstances[0] : null)
       return otherInstances
     })
     .then(otherInstances => Promise.all(
@@ -51,32 +51,31 @@ const updateCache = (cache, domain, key) => {
       // how `self` should refer to the other(s)?)
       const hasOnePromises = Object.keys(hasOne || {})
       .map(otherTypeName => findManyAndTraverse(
-        self, type, typeDef, otherTypeName, hasOne[otherTypeName]
+        self, type, typeDef, otherTypeName, hasOne[otherTypeName], false /* not hasMany... */
       ))
 
       return Promise.all([ ...hasManyPromises, ...hasOnePromises ])
     })
   }
 
-  return rootLoader.load(key)
-  .then(root => {
-    console.log('root loaded', root)
-    return root
-  })
-  .then(root => traverse(domain.root, key))
+  return traverse(domain.root, key)
 }
 
-export default (cache, domain, key) => new Promise((resolve, reject) => {
+const derive = (cache, domain, key) => {
 
-  // resolve('ok')
+  function traverse(type, key) {
+    const loader = cache.getLoader(type)
+    return loader.load(key)
+    .then(self => {
+      const typeDef = domain.types[type]
+      const { hasMany, hasOne } = typeDef
+      console.log('derive.traverse, self', self)
+      // ...
+    })
+  }
 
-  return updateCache(cache, domain, key)
-  .then(() => {
-    console.log('should now derive (or done already?), then store derived props')
-    throw new Error('oops')
-  })
-  .catch(err => {
-    console.log('error in UPDATE', err)
-    throw err
-  })
-})
+  return traverse(domain.root, key)
+}
+
+export default (cache, domain, key) => updateCache(cache, domain, key)
+.then(() => derive(cache, domain, key))

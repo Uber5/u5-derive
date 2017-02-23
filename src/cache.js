@@ -16,6 +16,10 @@ const load = type => keys => mongo
 }).toArray())
 .then(docs => {
   console.log('docs found', type, keys, docs)
+  if (docs.length != keys.length) {
+    throw new Error(`load failed, keys=${ keys }, docs.length=${ docs.length }.`
+      + ' This probably means that (one of the) keys were not found in MongoDB.')
+  }
   return docs
 })
 
