@@ -2,7 +2,7 @@ import { join } from 'path'
 import express from 'express'
 
 import loadDomain from './load-domain'
-import cache from './cache'
+import Cache from './cache'
 import update from './update'
 
 // load the domain
@@ -13,6 +13,8 @@ const domainFile = process.argv[2]
 const domain = loadDomain(join(__dirname, domainFile))
 
 console.log('domain', domain)
+
+const cache = new Cache()
 
 // setup http service
 const app = express()
@@ -25,7 +27,10 @@ app.post('/update/:key', (req, res) => {
   .then(() => {
     res.send('domain updated')
   })
-  .catch(err => res.status(500).send('Error while updating domain: ' + err.message))
+  .catch(err => {
+    console.log('err', err)
+    res.status(500).send('Error while updating domain: ' + err.message)
+  })
 })
 
 const port = process.env.PORT || 3000
