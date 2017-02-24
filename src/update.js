@@ -106,9 +106,7 @@ const derive = (cache, domain, key) => {
         Object.keys(type.derivedProps || []).map(propName => {
           if (!o[propName]) {
             const prop = type.derivedProps[propName]
-            o[propName] = derivation(() => {
-              return prop.f.bind(o)()
-            })
+            o[propName] = derivation(() => prop.f(o))
           }
         })
         return true

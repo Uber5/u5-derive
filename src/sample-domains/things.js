@@ -9,12 +9,9 @@
       },
       "derivedProps": {
         "distanceSoFar": {
-          "f": function() {
-            console.log('distanceSoFar', this.previousThing ? true : false, this)
-            return this.previousThing
-              ? this.previousThing.distanceSoFar.get() + this.distance
-              : this.distance
-          }
+          "f": self => self.previousThing
+            ? self.previousThing.distanceSoFar.get() + self.distance
+            : self.distance
         }
       },
       "inputProps": {
