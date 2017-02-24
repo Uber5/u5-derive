@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { transact, derivation } from 'derivable'
 import mongo from './mongo'
 
 const updateCache = (cache, domain, key) => {
@@ -76,8 +77,10 @@ const derive = (cache, domain, key) => {
       }
     }
 
-    console.log('traverse (cb)', type, o)
-    cb(o)
+    // console.log('traverse (cb)', type, o)
+    if (!cb(type, o)) {
+      console.log('aborting traversal, callback returned false')
+    }
 
     const typeDef = domain.types[type]
     const { hasMany, hasOne } = typeDef
@@ -96,8 +99,29 @@ const derive = (cache, domain, key) => {
   const loader = cache.getLoader(domain.root)
   return loader.load(key)
   .then(self => {
-    traverse(domain.root, self, o => {
-      console.log('DERIVE?', o)
+    transact(() => {
+      traverse(domain.root, self, (typeName, o) => {
+        const type = domain.types[typeName]
+        console.log('DERIVE?', type, o._id)
+        Object.keys(type.derivedProps || []).map(propName => {
+          if (!o[propName]) {
+            const prop = type.derivedProps[propName]
+            o[propName] = derivation(() => {
+              return prop.f.bind(o)()
+            })
+          }
+        })
+        return true
+      })
+    })
+
+    // log derived values
+    traverse(domain.root, self, (typeName, o) => {
+      const type = domain.types[typeName]
+      Object.keys(type.derivedProps || []).map(propName => {
+        console.log(`o=${ o._id}, ${ propName }=${ o[propName].get() }`)
+      })
+      return true
     })
   })
 }
