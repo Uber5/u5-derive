@@ -25,6 +25,7 @@ app.post('/update/:key', (req, res) => {
   console.log('update', key)
   update(cache, domain, key)
   .then(() => {
+    console.log('domain updated', key)
     res.send('domain updated')
   })
   .catch(err => {

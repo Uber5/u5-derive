@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { transact, derivation } from 'derivable'
 import mongo from './mongo'
+import * as R from 'ramda'
 
 const updateCache = (cache, domain, key) => {
 
@@ -65,7 +66,7 @@ const derive = (cache, domain, key) => {
 
   function traverse(type, o, cb) {
 
-    const traverseAssocication = (self, type, typeDef, other, otherDef, many = true) => {
+    const traverseAssociation = (self, type, typeDef, other, otherDef, many = true) => {
       const others = self[otherDef.as || other]
       // console.log('findAndTraverse, others', others)
       if (many) {
@@ -86,12 +87,12 @@ const derive = (cache, domain, key) => {
     const { hasMany, hasOne } = typeDef
     // console.log('derive.traverse, o', o)
     Object.keys(hasMany || {})
-    .map(otherTypeName => traverseAssocication(
+    .map(otherTypeName => traverseAssociation(
       o, type, typeDef, otherTypeName, hasOne[otherTypeName]
     ))
 
     Object.keys(hasOne || {})
-    .map(otherTypeName => traverseAssocication(
+    .map(otherTypeName => traverseAssociation(
       o, type, typeDef, otherTypeName, hasOne[otherTypeName], false
     ))
   }
@@ -113,14 +114,27 @@ const derive = (cache, domain, key) => {
       })
     })
 
-    // log derived values
+    // store / update derived props
+    const updates = []
     traverse(domain.root, self, (typeName, o) => {
       const type = domain.types[typeName]
+      const derivedProps = {}
       Object.keys(type.derivedProps || []).map(propName => {
         console.log(`o=${ o._id}, ${ propName }=${ o[propName].get() }`)
+        derivedProps[propName] = o[propName].get()
       })
+      if (!o._D || !R.equals(o._D, derivedProps)) {
+        console.log(`must update ${ typeName } ${ o._id }`)
+        updates.push(mongo.then(db => db.collection(typeName).findOneAndUpdate({
+          _id: ObjectId(o._id)
+        }, {
+          $set: { _D: derivedProps }
+        })))
+      }
       return true
     })
+    return Promise.all(updates)
+
   })
 }
 
