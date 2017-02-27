@@ -3,6 +3,8 @@ import { transact, derivation } from 'derivable'
 import mongo from './mongo'
 import * as R from 'ramda'
 
+const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
+
 const updateCache = (cache, domain, key) => {
 
   const rootLoader = cache.getLoader(domain.root)
@@ -123,12 +125,12 @@ const derive = (cache, domain, key) => {
         console.log(`o=${ o._id}, ${ propName }=${ o[propName].get() }`)
         derivedProps[propName] = o[propName].get()
       })
-      if (!o._D || !R.equals(o._D, derivedProps)) {
+      if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
         console.log(`must update ${ typeName } ${ o._id }`)
         updates.push(mongo.then(db => db.collection(typeName).findOneAndUpdate({
           _id: ObjectId(o._id)
         }, {
-          $set: { _D: derivedProps }
+          $set: { [derivedPropsKey]: derivedProps }
         })))
       }
       return true
