@@ -7,7 +7,7 @@ const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
 
 const updateCache = (cache, domain, key, counter) => {
 
-  console.log(`updateCache, ${ domain } ${ key }, counter=${ counter }`)
+  console.log(`updateCache, ${ key }, counter=${ counter }`)
 
   const findAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
@@ -42,8 +42,10 @@ const updateCache = (cache, domain, key, counter) => {
       const typeDef = domain.types[type]
       const { hasMany, hasOne } = typeDef
 
-      if (self.__version === counter) {
-        console.log('Breaking recursion?', type, key)
+      if (self.__version >= counter) {
+        // concurrent load may result in newer version, should be idempotent
+        // nevertheless
+        console.log('Breaking recursion', type, key)
         return Promise.resolve()
       }
       self.__version = counter
@@ -123,10 +125,10 @@ const derive = (cache, domain, key) => {
       const type = domain.types[typeName]
       const derivedProps = {}
       Object.keys(type.derivedProps || []).map(propName => {
-        console.log(`o=${ o._id }, ${ propName }=${ o[propName].get() }`)
+        // console.log(`o=${ o._id }, ${ propName }=${ o[propName].get() }`)
         derivedProps[propName] = o[propName].get()
       })
-      console.log(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
+      // console.log(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
       if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
         console.log(`must update ${ typeName } ${ o._id }`)
         updates.push(mongo.then(db => db.collection(typeName).findOneAndUpdate({
