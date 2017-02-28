@@ -4,6 +4,7 @@ import express from 'express'
 import loadDomain from './load-domain'
 import Cache from './cache'
 import update from './update'
+import { tailAndInvalidate } from './tail'
 
 // load the domain
 if (process.argv.length !== 3) {
@@ -38,3 +39,6 @@ const port = process.env.PORT || 3000
 app.listen(port, () => console.log(`listening on port ${ port }`))
 
 // setup mongodb tailing
+const tailUrl = process.env.MONGO_TAIL_URL || 'mongodb://localhost/local'
+const tailDatabaseName = process.env.MONGO_TAIL_DATABASE_NAME || 'u5-derive-dev'
+tailAndInvalidate(tailUrl, tailDatabaseName, cache)

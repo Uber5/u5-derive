@@ -27,6 +27,9 @@ class Cache {
   constructor() {
     this.loaders = {}
   }
+  hasLoader(type) {
+    return this.loaders[type] != null
+  }
   getLoader(type) {
     if (!this.loaders[type]) {
       this.loaders[type] = new DataLoader(load(type))

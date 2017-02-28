@@ -4,7 +4,13 @@
       "hasOne": {
         "things": {
           "as": "previousThing",
-          "foreignKey": "previousThingId"
+          "foreignKey": "nextThingId"
+        },
+      },
+      "hasMany": {
+        "details": {
+          "as": "detailsOfThings",
+          "foreignKey": "thingId"
         }
       },
       "derivedProps": {
@@ -12,12 +18,18 @@
           "f": self => self.previousThing
             ? self.previousThing.distanceSoFar.get() + self.distance
             : self.distance
+        },
+        "sumOfDetails": {
+          "f": self => self.detailsOfThings
+            .map(d => d.counter || 0)
+            .reduce((acc, d) => acc + d, 0)
         }
       },
       "inputProps": {
         "distance": {}
       }
-    }
+    },
+    "details": {}
   },
   "root": "things"
 }

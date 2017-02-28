@@ -7,8 +7,6 @@ const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
 
 const updateCache = (cache, domain, key) => {
 
-  const rootLoader = cache.getLoader(domain.root)
-
   const findManyAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
     // console.log(`findManyAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
@@ -90,7 +88,7 @@ const derive = (cache, domain, key) => {
     // console.log('derive.traverse, o', o)
     Object.keys(hasMany || {})
     .map(otherTypeName => traverseAssociation(
-      o, type, typeDef, otherTypeName, hasOne[otherTypeName]
+      o, type, typeDef, otherTypeName, hasMany[otherTypeName]
     ))
 
     Object.keys(hasOne || {})
@@ -122,9 +120,10 @@ const derive = (cache, domain, key) => {
       const type = domain.types[typeName]
       const derivedProps = {}
       Object.keys(type.derivedProps || []).map(propName => {
-        console.log(`o=${ o._id}, ${ propName }=${ o[propName].get() }`)
+        console.log(`o=${ o._id }, ${ propName }=${ o[propName].get() }`)
         derivedProps[propName] = o[propName].get()
       })
+      console.log(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
       if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
         console.log(`must update ${ typeName } ${ o._id }`)
         updates.push(mongo.then(db => db.collection(typeName).findOneAndUpdate({
