@@ -15,12 +15,12 @@
       },
       "derivedProps": {
         "distanceSoFar": {
-          "f": self => self.previousThing
-            ? self.previousThing.distanceSoFar.get() + self.distance
+          "f": self => self.previousThing.get()
+            ? self.previousThing.get().distanceSoFar.get() + self.distance
             : self.distance
         },
         "sumOfDetails": {
-          "f": self => self.detailsOfThings
+          "f": self => self.detailsOfThings.get()
             .map(d => d.counter || 0)
             .reduce((acc, d) => acc + d, 0)
         }

@@ -5,7 +5,9 @@ import * as R from 'ramda'
 
 const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
 
-const updateCache = (cache, domain, key) => {
+const updateCache = (cache, domain, key, counter) => {
+
+  console.log(`updateCache, ${ domain } ${ key }, counter=${ counter }`)
 
   const findManyAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
@@ -20,8 +22,11 @@ const updateCache = (cache, domain, key) => {
 
       // console.log('findManyAndTraverse, otherInstances', otherInstances.map(i => i._id))
 
-      otherInstances.forEach(i => loader.prime(i._id, i))
-      self[otherDef.as || other] = many ? otherInstances : (otherInstances.length > 0 ? otherInstances[0] : null)
+      otherInstances.forEach(i => loader.clear(i._id).prime(i._id, i))
+      console.log('findManyAndTraverse, about to assign', otherDef.as || other, self._id)
+      self[otherDef.as || other] = many
+        ? derivation(() => otherInstances)
+        : derivation(() => otherInstances.length > 0 ? otherInstances[0] : null)
       return otherInstances
     })
     .then(otherInstances => Promise.all(
@@ -37,11 +42,11 @@ const updateCache = (cache, domain, key) => {
       const typeDef = domain.types[type]
       const { hasMany, hasOne } = typeDef
 
-      if (self.__loaded) {
+      if (self.__version === counter) {
         console.log('Breaking recursion?', type, key)
         return Promise.resolve()
       }
-      self.__loaded = true
+      self.__version = counter
 
       const hasManyPromises = Object.keys(hasMany || {})
       .map(otherTypeName => findManyAndTraverse(
@@ -67,7 +72,7 @@ const derive = (cache, domain, key) => {
   function traverse(type, o, cb) {
 
     const traverseAssociation = (self, type, typeDef, other, otherDef, many = true) => {
-      const others = self[otherDef.as || other]
+      const others = self[otherDef.as || other].get()
       // console.log('findAndTraverse, others', others)
       if (many) {
         others.map(instance => traverse(other, instance, cb))
@@ -139,5 +144,6 @@ const derive = (cache, domain, key) => {
   })
 }
 
-export default (cache, domain, key) => updateCache(cache, domain, key)
+let counter = 0
+export default (cache, domain, key) => updateCache(cache, domain, key, ++counter)
 .then(() => derive(cache, domain, key))
