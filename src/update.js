@@ -9,9 +9,9 @@ const updateCache = (cache, domain, key, counter) => {
 
   console.log(`updateCache, ${ domain } ${ key }, counter=${ counter }`)
 
-  const findManyAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
+  const findAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
-    // console.log(`findManyAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
+    // console.log(`findAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
 
     const loader = cache.getLoader(other)
 
@@ -20,10 +20,10 @@ const updateCache = (cache, domain, key, counter) => {
     }).toArray())
     .then(otherInstances => {
 
-      // console.log('findManyAndTraverse, otherInstances', otherInstances.map(i => i._id))
+      // console.log('findAndTraverse, otherInstances', otherInstances.map(i => i._id))
 
       otherInstances.forEach(i => loader.clear(i._id).prime(i._id, i))
-      console.log('findManyAndTraverse, about to assign', otherDef.as || other, self._id)
+      console.log('findAndTraverse, about to assign', otherDef.as || other, self._id)
       self[otherDef.as || other] = many
         ? derivation(() => otherInstances)
         : derivation(() => otherInstances.length > 0 ? otherInstances[0] : null)
@@ -49,14 +49,14 @@ const updateCache = (cache, domain, key, counter) => {
       self.__version = counter
 
       const hasManyPromises = Object.keys(hasMany || {})
-      .map(otherTypeName => findManyAndTraverse(
+      .map(otherTypeName => findAndTraverse(
         self, type, typeDef, otherTypeName, hasMany[otherTypeName]
       ))
 
       // TODO: almost the same as for 'hasMany' (only thing different is probably
       // how `self` should refer to the other(s)?)
       const hasOnePromises = Object.keys(hasOne || {})
-      .map(otherTypeName => findManyAndTraverse(
+      .map(otherTypeName => findAndTraverse(
         self, type, typeDef, otherTypeName, hasOne[otherTypeName], false /* not hasMany... */
       ))
 
@@ -108,12 +108,10 @@ const derive = (cache, domain, key) => {
     transact(() => {
       traverse(domain.root, self, (typeName, o) => {
         const type = domain.types[typeName]
-        console.log('DERIVE?', type, o._id)
+        // console.log('DERIVE?', type, o._id)
         Object.keys(type.derivedProps || []).map(propName => {
-          if (!o[propName]) {
-            const prop = type.derivedProps[propName]
-            o[propName] = derivation(() => prop.f(o))
-          }
+          const prop = type.derivedProps[propName]
+          o[propName] = derivation(() => prop.f(o))
         })
         return true
       })
