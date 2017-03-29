@@ -3,7 +3,7 @@ import express from 'express'
 
 import loadDomain from './load-domain'
 import Cache from './cache'
-import update from './update'
+import { update, resync } from './update'
 import { tailAndInvalidate } from './tail'
 
 // load the domain
@@ -35,6 +35,18 @@ app.post('/update/:key', (req, res) => {
   })
 })
 
+app.post('/resync', (req, res) => {
+  console.log('resync')
+  resync(cache, domain)
+  .then(() => {
+    console.log('resync done')
+    res.send('resync done')
+  })
+  .catch(err => {
+    console.log('err', err)
+    res.status(500).send('Resync failed: ' + err.message)
+  })
+})
 const port = process.env.PORT || 3000
 app.listen(port, () => console.log(`listening on port ${ port }`))
 

@@ -145,5 +145,9 @@ const derive = (cache, domain, key) => {
 }
 
 let counter = 0
-export default (cache, domain, key) => updateCache(cache, domain, key, ++counter)
+export const update = (cache, domain, key) => updateCache(cache, domain, key, ++counter)
 .then(() => derive(cache, domain, key))
+
+export const resync = (cache, domain) => mongo
+.then(db => db.collection(domain.root))
+.then(coll => coll.find) // TODO: incomplete...
