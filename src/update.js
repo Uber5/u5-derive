@@ -150,4 +150,10 @@ export const update = (cache, domain, key) => updateCache(cache, domain, key, ++
 
 export const resync = (cache, domain) => mongo
 .then(db => db.collection(domain.root))
-.then(coll => coll.find) // TODO: incomplete...
+.then(coll => coll.find({}, { _id: 1 }).toArray())
+.then(docs => docs
+  .map(doc => doc._id)
+  .map(id => updateCache(cache, domain, id, ++counter)
+    .then(() => derive(cache, domain, id))
+  )
+)

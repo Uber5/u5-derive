@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "supervisor -w ./src -- -r 'babel-register' src ./sample-domains/things.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sample:simple": "node -r 'babel-register' ./samples/simple/index.js"
   },
   "author": "Chris Oloff <chris@uber5.com> (http://about.uber5.com/)",
   "license": "ISC",
@@ -16,6 +17,8 @@
     "babel-preset-stage-2": "6.22.0",
     "flow-bin": "0.39.0",
     "jest": "18.1.0",
+    "repl": "0.1.3",
+    "repl-promised": "0.1.0",
     "rimraf": "2.6.0",
     "source-map-support": "0.4.11",
     "supervisor": "0.12.0"
@@ -23,9 +26,7 @@
   "dependencies": {
     "dataloader": "1.3.0",
     "derivable": "0.12.1",
-    "express": "4.14.1",
     "mongo-oplog": "2.0.2",
-    "ramda": "0.23.0",
-    "serialize-javascript": "1.3.0"
+    "ramda": "0.23.0"
   }
 }
