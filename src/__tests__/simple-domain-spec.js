@@ -2,6 +2,11 @@ import { Cache, update as _update, resync, tailAndInvalidate } from '..'
 import mongo from '../mongo'
 import domain from '../../samples/simple/domain'
 
+const simplifiedInsert = (collection, doc) => mongo
+  .then(db => db.collection(collection))
+  .then(coll => coll.insert(doc))
+  .then(r => r.ops[0])
+
 describe('simple domain', () => {
 
   let cache, update
@@ -19,21 +24,15 @@ describe('simple domain', () => {
 
   }))
 
-  it('does stuff', () => Promise
-    .resolve(3)
-    .then(r => expect(r).toBe(3))
-  )
-
   it('derives simple props', () => mongo
-    .then(db => db.collection('journeys').insert({}))
-    .then(insertResult => insertResult.ops[0])
+    .then(db => simplifiedInsert('journeys', {}))
     .then(journey => Promise.all([
       journey,
-      mongo.then(db => db.collection('legs').insert({ journeyId: journey._id }))
+      mongo.then(db => simplifiedInsert('legs', { journeyId: journey._id }))
     ]))
-    .then(([ journey, insertResult ]) => Promise.all([
+    .then(([ journey, leg ]) => Promise.all([
       journey,
-      insertResult.ops[0],
+      leg,
       update(journey._id)
     ]))
     .then(([ journey, leg, updateResult ]) => {
