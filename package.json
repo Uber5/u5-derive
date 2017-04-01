@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "supervisor -w ./src -- -r 'babel-register' src ./sample-domains/things.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:watch": "jest --watch --forceExit",
     "sample:simple": "node -r 'babel-register' ./samples/simple/index.js"
   },
   "author": "Chris Oloff <chris@uber5.com> (http://about.uber5.com/)",
