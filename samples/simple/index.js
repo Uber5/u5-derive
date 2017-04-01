@@ -7,30 +7,7 @@ import { ObjectId } from 'mongodb'
 import mongo from '../../src/mongo'
 import { Cache, update, resync, tailAndInvalidate } from '../../src'
 
-const domain = {
-  root: 'journeys',
-  types: {
-    journeys: {
-      hasMany: {
-        legs: {
-          as: 'details',
-          foreignKey: 'journeyId'
-        },
-        journeys: { // TODO: what if we have multiple 'hasMany' to the same other type?
-          as: 'shouldDoNext',
-          foreinKey: 'shouldDoAfter'
-        }
-      },
-      derivedProps: {
-        numLegs: {
-          f: self => self.details.get().length
-        }
-      }
-    },
-    legs: {
-    }
-  }
-}
+import domain from './domain'
 
 // start
 // following provides a REPL for testing. An actual server using u5-derive would
