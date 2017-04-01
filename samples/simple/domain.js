@@ -28,9 +28,9 @@ export default {
       derivedProps: {
         distanceSoFar: {
           f: self => self.distance
-            + self.previousLeg.get()
+            + (self.previousLeg.get()
               ? self.previousLeg.get().distanceSoFar.get()
-              : 0
+              : 0)
         }
       }
     }
