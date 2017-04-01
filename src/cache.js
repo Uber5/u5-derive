@@ -2,11 +2,12 @@ import DataLoader from 'dataloader'
 import { ObjectId } from 'mongodb'
 import mongo from './mongo'
 
-mongo.then(db => console.log('connected', db.databaseName))
+const debug = require('debug')('u5-derive')
+
+mongo.then(db => debug('connected', db.databaseName))
 
 const load = type => keys => mongo
 .then(db => {
-  // console.log('should load', type, keys, keys.map(key => ObjectId(key)))
   return db
 })
 .then(db => db.collection(type).find({
@@ -15,7 +16,6 @@ const load = type => keys => mongo
   }
 }).toArray())
 .then(docs => {
-  // console.log('docs found', type, keys, docs)
   if (docs.length != keys.length) {
     throw new Error(`load failed, keys=${ keys }, docs.length=${ docs.length }.`
       + ' This probably means that (one of the) keys were not found in MongoDB.')

@@ -3,11 +3,13 @@ import { transact, derivation } from 'derivable'
 import mongo from './mongo'
 import * as R from 'ramda'
 
+const debug = require('debug')('u5-derive')
+
 const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
 
 const updateCache = (cache, domain, key, counter) => {
 
-  console.log(`updateCache, ${ key }, counter=${ counter }`)
+  debug(`updateCache, ${ key }, counter=${ counter }`)
 
   const findAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
 
@@ -23,7 +25,7 @@ const updateCache = (cache, domain, key, counter) => {
       // console.log('findAndTraverse, otherInstances', otherInstances.map(i => i._id))
 
       otherInstances.forEach(i => loader.clear(i._id).prime(i._id, i))
-      console.log('findAndTraverse, about to assign', otherDef.as || other, self._id)
+      debug('findAndTraverse, about to assign', otherDef.as || other, self._id)
       self[otherDef.as || other] = many
         ? derivation(() => otherInstances)
         : derivation(() => otherInstances.length > 0 ? otherInstances[0] : null)
@@ -36,7 +38,7 @@ const updateCache = (cache, domain, key, counter) => {
 
   function traverseToLoad(type, key) {
     const loader = cache.getLoader(type)
-    console.log('traverseToLoad', type, key)
+    debug('traverseToLoad', type, key)
     return loader.load(key)
     .then(self => {
       const typeDef = domain.types[type]
@@ -87,7 +89,7 @@ const derive = (cache, domain, key) => {
 
     // console.log('traverse (cb)', type, o)
     if (!cb(type, o)) {
-      console.log('aborting traversal, callback returned false')
+      debug('aborting traversal, callback returned false')
     }
 
     const typeDef = domain.types[type]
@@ -130,7 +132,7 @@ const derive = (cache, domain, key) => {
       })
       // console.log(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
       if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
-        console.log(`must update ${ typeName } ${ o._id }`)
+        debug(`must update ${ typeName } ${ o._id }`)
         updates.push(mongo.then(db => db.collection(typeName).findOneAndUpdate({
           _id: ObjectId(o._id)
         }, {

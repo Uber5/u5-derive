@@ -1,5 +1,7 @@
 import MongoOplog from 'mongo-oplog'
 
+const debug = require('debug')('u5-derive')
+
 export const tailAndInvalidate = (url, dbName, cache) => {
   const oplog = MongoOplog(url, { ns: `${ dbName }.*` })
 
@@ -13,10 +15,10 @@ export const tailAndInvalidate = (url, dbName, cache) => {
   */
 
   const invalidate = (type, key) => {
-    console.log(`invalidate ${ type } ${ key }`)
+    debug(`invalidate ${ type } ${ key }`)
     if (cache.hasLoader(type)) {
       cache.getLoader(type).clear(key)
-      console.log(`cleared from cache: ${ type } ${ key }`)
+      debug(`cleared from cache: ${ type } ${ key }`)
     }
   }
 

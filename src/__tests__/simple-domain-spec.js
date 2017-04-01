@@ -15,10 +15,7 @@ describe('simple domain', () => {
     const tailDatabaseName = process.env.MONGO_TAIL_DATABASE_NAME_TEST || 'u5-derive-test'
     tailAndInvalidate(tailUrl, tailDatabaseName, cache)
 
-    update = key => {
-      console.log('update', cache, domain, key)
-      return _update(cache, domain, key)
-    }
+    update = key => _update(cache, domain, key)
 
   }))
 
@@ -40,7 +37,7 @@ describe('simple domain', () => {
       update(journey._id)
     ]))
     .then(([ journey, leg, updateResult ]) => {
-      console.log('journey, leg, updateResult', journey, leg, updateResult)
+      // console.log('journey, leg, updateResult', journey, leg, updateResult)
       return mongo.then(db => db.collection('journeys').findOne({ _id: journey._id }))
     })
     .then(journey => expect(journey._D.numLegs).toBe(1))
