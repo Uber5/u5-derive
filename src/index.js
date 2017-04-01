@@ -18,7 +18,7 @@ import { tailAndInvalidate } from './tail'
 // const cache = new Cache()
 
 export {
-  Cache, resync, tailAndInvalidate
+  Cache, update, resync, tailAndInvalidate
 }
 
 // setup http service

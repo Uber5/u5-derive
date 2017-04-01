@@ -5,7 +5,7 @@ import * as R from 'ramda'
 import { ObjectId } from 'mongodb'
 
 import mongo from '../../src/mongo'
-import { Cache, resync, tailAndInvalidate } from '../../src'
+import { Cache, update, resync, tailAndInvalidate } from '../../src'
 
 const domain = {
   root: 'journeys',
@@ -36,7 +36,8 @@ const domain = {
 // following provides a REPL for testing. An actual server using u5-derive would
 // not have this (necessarily).
 mongo.then(db => {
-  console.log('type "foo" to see stuff...')
+
+  console.log('domain types: ' + R.keys(domain.types).join(', '))
 
   const replServer = repl.start({
     prompt: "simple > ",
@@ -47,6 +48,7 @@ mongo.then(db => {
   replServer.context.foo = "bar";
   replServer.context._db = db
   replServer.context.ObjectId = ObjectId
+  replServer.context.R = R
 
   // setup mongodb tailing
   const tailUrl = process.env.MONGO_TAIL_URL || 'mongodb://localhost/local'
@@ -55,11 +57,13 @@ mongo.then(db => {
 
   replServer.context.resync = () => resync(cache, domain)
     .then(() => console.log('resync done'))
+  replServer.context.update = key => update(cache, domain, key)
+    .then(() => console.log('update done'))
 
   R.keys(domain.types).map(type => {
-    console.log('type', type)
     replServer.context[type] = {
       all: () => db.collection(type).find({}).toArray(),
+      find: query => db.collection(type).find(query).toArray(),
       insert: doc => db.collection(type).insert(doc),
       update: (_id, update) => db.collection(type)
         .findOneAndUpdate({ _id: new ObjectId(_id) }, update, { returnOriginal: false })
