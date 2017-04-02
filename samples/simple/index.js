@@ -1,13 +1,12 @@
 import repl from 'repl'
 import { promisify } from 'repl-promised'
 import * as R from 'ramda'
-
-import { ObjectId } from 'mongodb'
-
-import mongo from '../../src/mongo'
+import { MongoClient, ObjectId } from 'mongodb'
 import { Cache, update, resync, tailAndInvalidate } from '../../src'
-
 import domain from './domain'
+
+const mongoUrl = process.env.MONGO_URL || `mongodb://localhost/u5-derive-dev`
+const mongo = MongoClient.connect(mongoUrl)
 
 // start
 // following provides a REPL for testing. An actual server using u5-derive would
@@ -20,7 +19,7 @@ mongo.then(db => {
     prompt: "simple > ",
   });
 
-  const cache = new Cache()
+  const cache = new Cache(mongo)
 
   replServer.context.foo = "bar";
   replServer.context._db = db

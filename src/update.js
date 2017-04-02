@@ -1,6 +1,5 @@
 import { ObjectId } from 'mongodb'
 import { transact, derivation } from 'derivable'
-import mongo from './mongo'
 import * as R from 'ramda'
 
 const debug = require('debug')('u5-derive')
@@ -17,7 +16,7 @@ const updateCache = (cache, domain, key, counter) => {
 
     const loader = cache.getLoader(other)
 
-    return mongo.then(db => db.collection(other).find({
+    return cache.mongo.then(db => db.collection(other).find({
       [otherDef.foreignKey]: ObjectId(self._id)
     }).toArray())
     .then(otherInstances => {
@@ -133,7 +132,7 @@ const derive = (cache, domain, key) => {
       // console.log(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
       if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
         debug(`must update ${ typeName } ${ o._id }`)
-        updates.push(mongo.then(db => db.collection(typeName).findOneAndUpdate({
+        updates.push(cache.mongo.then(db => db.collection(typeName).findOneAndUpdate({
           _id: ObjectId(o._id)
         }, {
           $set: { [derivedPropsKey]: derivedProps }
@@ -150,7 +149,7 @@ let counter = 0
 export const update = (cache, domain, key) => updateCache(cache, domain, key, ++counter)
 .then(() => derive(cache, domain, key))
 
-export const resync = (cache, domain) => mongo
+export const resync = (cache, domain) => cache.mongo
 .then(db => db.collection(domain.root))
 .then(coll => coll.find({}, { _id: 1 }).toArray())
 .then(docs => docs

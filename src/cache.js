@@ -1,15 +1,9 @@
 import DataLoader from 'dataloader'
 import { ObjectId } from 'mongodb'
-import mongo from './mongo'
 
 const debug = require('debug')('u5-derive')
 
-mongo.then(db => debug('connected', db.databaseName))
-
-const load = type => keys => mongo
-.then(db => {
-  return db
-})
+const load = (mongo, type) => keys => mongo
 .then(db => db.collection(type).find({
   _id: {
     $in: keys.map(key => ObjectId(key))
@@ -24,15 +18,16 @@ const load = type => keys => mongo
 })
 
 class Cache {
-  constructor() {
+  constructor(mongo) {
     this.loaders = {}
+    this.mongo = mongo
   }
   hasLoader(type) {
     return this.loaders[type] != null
   }
   getLoader(type) {
     if (!this.loaders[type]) {
-      this.loaders[type] = new DataLoader(load(type))
+      this.loaders[type] = new DataLoader(load(this.mongo, type))
     }
     return this.loaders[type]
   }

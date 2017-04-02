@@ -17,27 +17,27 @@ const journeyWithThreeLegs = () => simplifiedInsert('journeys', {})
     journey,
     simplifiedInsert('legs', { journeyId: journey._id, distance: Math.floor(Math.random() * 10) }),
   ]))
-  .then(([ journey, leg1 ]) => Promise.all([
+  .then(([ journey, leg3 ]) => Promise.all([
     journey,
-    leg1,
+    leg3,
     simplifiedInsert('legs', {
       journeyId: journey._id,
-      previousLeg: leg1._id,
+      nextLegId: leg3._id,
       distance: Math.floor(Math.random() * 10)
     }),
   ]))
-  .then(([ journey, leg1, leg2 ]) => Promise.all([
+  .then(([ journey, leg3, leg2 ]) => Promise.all([
     journey,
-    leg1,
+    leg3,
     leg2,
     simplifiedInsert('legs', {
       journeyId: journey._id,
-      previousLeg: leg2._id,
+      nextLegId: leg2._id,
       distance: Math.floor(Math.random() * 10)
     }),
   ]))
-  .then(([ journey, leg1, leg2, leg3 ]) => journey)
-  .then(journey => { console.log('journey', journey); return journey })
+  .then(([ journey, leg3, leg2, leg1 ]) => journey)
+  // .then(journey => { console.log('journey', journey); return journey })
 
 describe('simple domain', () => {
 
@@ -45,7 +45,7 @@ describe('simple domain', () => {
 
   beforeEach(() => mongo.then(db => {
 
-    cache = new Cache()
+    cache = new Cache(mongo)
 
     // setup mongodb tailing
     const tailUrl = process.env.MONGO_TAIL_URL || 'mongodb://localhost/local'
@@ -75,10 +75,27 @@ describe('simple domain', () => {
   )
 
   it('derives within a linked list', () => journeyWithThreeLegs()
+
+    // update (runs declarative logic)
     .then(journey => update(journey._id).then(() => journey))
+
+    // refresh (findOne again) the journey
     .then(journey => mongo.then(db => db.collection('journeys').findOne({ _id: journey._id })))
-    .then(journey => { console.log('journey', journey); return journey })
-    .then(journey => expect(journey._D.numLegs).toBe(3))
+    // .then(journey => { console.log('journey', journey); return journey })
+    // .then(journey => expect(journey._D.numLegs).toBe(3))
+
+    // load legs
+    .then(journey => Promise.all([
+      journey,
+      mongo.then(db => db.collection('legs').find({ journeyId: journey._id }).toArray()),
+      mongo.then(db => db.collection('legs').findOne({ _id: journey._D.firstLegId })),
+      mongo.then(db => db.collection('legs').findOne({ _id: journey._D.lastLegId }))
+    ]))
+    .then(([ journey, legs, firstLeg, lastLeg ]) => {
+      expect(journey._D.numLegs).toBe(3)
+      expect(legs.reduce((sum, l) => sum + l.distance, 0)).toBe(lastLeg._D.distanceSoFar)
+      expect(firstLeg.distance === firstLeg._D.distanceSoFar)
+    })
   )
 
 })
