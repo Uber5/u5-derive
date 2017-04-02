@@ -3,7 +3,7 @@ import { promisify } from 'repl-promised'
 import * as R from 'ramda'
 import { MongoClient, ObjectId } from 'mongodb'
 import { Cache, update, resync, tailAndInvalidate, startRepl } from '../../src'
-import domain from './domain'
+import domain from './clubs-domain'
 
 const mongoUrl = process.env.MONGO_URL || `mongodb://localhost/u5-derive-dev`
 const mongo = MongoClient.connect(mongoUrl)
@@ -24,7 +24,7 @@ mongo.then(db => {
   tailAndInvalidate(tailUrl, tailDatabaseName, cache)
 
   startRepl({
-    prompt: 'simple > ',
+    prompt: 'clubs > ',
     mongo,
     cache,
     domain

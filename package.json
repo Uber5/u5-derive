@@ -7,7 +7,8 @@
     "dev": "supervisor -w ./src -- -r 'babel-register' src ./sample-domains/things.js",
     "test": "jest",
     "test:watch": "jest --watch --forceExit",
-    "sample:simple": "node -r 'babel-register' ./samples/simple/index.js"
+    "sample:simple": "node -r 'babel-register' ./samples/simple/index.js",
+    "sample:clubs": "node -r 'babel-register' ./samples/clubs/index.js"
   },
   "author": "Chris Oloff <chris@uber5.com> (http://about.uber5.com/)",
   "license": "ISC",
