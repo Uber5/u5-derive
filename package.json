@@ -2,11 +2,14 @@
   "name": "u5-derive",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "supervisor -w ./src -- -r 'babel-register' src ./sample-domains/things.js",
-    "test": "jest",
+    "test": "jest --forceExit",
     "test:watch": "jest --watch --forceExit",
+    "build": "babel src --out-dir dist --source-maps --ignore \"**/__tests__/*.js\"",
+    "prepublish": "npm run clean && npm test && mkdir -p dist && npm run build",
+    "clean": "rimraf dist",
     "sample:simple": "node -r 'babel-register' ./samples/simple/index.js",
     "sample:clubs": "node -r 'babel-register' ./samples/clubs/index.js"
   },
