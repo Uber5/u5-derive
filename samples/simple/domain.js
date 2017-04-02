@@ -5,14 +5,10 @@ export default {
   types: {
     journeys: {
       hasMany: {
-        legs: {
-          as: 'details',
+        details: {
+          of: 'legs',
           foreignKey: 'journeyId'
         },
-        journeys: { // TODO: what if we have multiple 'hasMany' to the same other type?
-          as: 'shouldDoNext',
-          foreinKey: 'shouldDoAfter'
-        }
       },
       derivedProps: {
         numLegs: {
@@ -37,15 +33,14 @@ export default {
     },
     legs: {
       hasOne: {
-        legs: {
-          as: 'previousLeg',
+        previousLeg: {
+          of: 'legs',
           foreignKey: 'nextLegId'
         }
       },
       derivedProps: {
         distanceSoFar: {
           f: self => {
-            // console.log('distanceSoFar', self.distance, self.previousLeg.get())
             return self.distance
               + (self.previousLeg.get()
                 ? self.previousLeg.get().distanceSoFar.get()

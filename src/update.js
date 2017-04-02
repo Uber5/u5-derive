@@ -1,3 +1,4 @@
+import { ok } from 'assert'
 import { ObjectId } from 'mongodb'
 import { transact, derivation } from 'derivable'
 import * as R from 'ramda'
@@ -10,22 +11,25 @@ const updateCache = (cache, domain, key, counter) => {
 
   debug(`updateCache, ${ key }, counter=${ counter }`)
 
-  const findAndTraverse = (self, type, typeDef, other, otherDef, many = true) => {
+  const findAndTraverse = (self, type, typeDef, relName /* other */, rel /* otherDef */, many = true) => {
 
-    // console.log(`findAndTraverse, self:`, self, 'type', type, 'other', other, 'otherDef', otherDef)
+    const other = rel.of || relName
+    ok(other, `name for association ${ relName } missing`)
+    const otherDef = domain.types[other]
+    ok(otherDef, `unable to determine type for assocation '${ relName }' of '${ type }'`)
 
     const loader = cache.getLoader(other)
 
     return cache.mongo.then(db => db.collection(other).find({
-      [otherDef.foreignKey]: ObjectId(self._id)
+      [rel.foreignKey]: ObjectId(self._id)
     }).toArray())
     .then(otherInstances => {
 
       // console.log('findAndTraverse, otherInstances', otherInstances.map(i => i._id))
 
       otherInstances.forEach(i => loader.clear(i._id).prime(i._id, i))
-      debug('findAndTraverse, about to assign', otherDef.as || other, self._id)
-      self[otherDef.as || other] = many
+      debug('findAndTraverse, about to assign', relName, self._id, otherInstances.length)
+      self[relName] = many
         ? derivation(() => otherInstances)
         : derivation(() => otherInstances.length > 0 ? otherInstances[0] : null)
       return otherInstances
@@ -37,7 +41,6 @@ const updateCache = (cache, domain, key, counter) => {
 
   function traverseToLoad(type, key) {
     const loader = cache.getLoader(type)
-    debug('traverseToLoad', type, key)
     return loader.load(key)
     .then(self => {
       const typeDef = domain.types[type]
@@ -52,15 +55,15 @@ const updateCache = (cache, domain, key, counter) => {
       self.__version = counter
 
       const hasManyPromises = Object.keys(hasMany || {})
-      .map(otherTypeName => findAndTraverse(
-        self, type, typeDef, otherTypeName, hasMany[otherTypeName]
+      .map(relName => findAndTraverse(
+        self, type, typeDef, relName, hasMany[relName]
       ))
 
       // TODO: almost the same as for 'hasMany' (only thing different is probably
       // how `self` should refer to the other(s)?)
       const hasOnePromises = Object.keys(hasOne || {})
-      .map(otherTypeName => findAndTraverse(
-        self, type, typeDef, otherTypeName, hasOne[otherTypeName], false /* not hasMany... */
+      .map(relName => findAndTraverse(
+        self, type, typeDef, relName, hasOne[relName], false /* not hasMany... */
       ))
 
       return Promise.all([ ...hasManyPromises, ...hasOnePromises ])
@@ -74,9 +77,13 @@ const derive = (cache, domain, key) => {
 
   function traverse(type, o, cb) {
 
-    const traverseAssociation = (self, type, typeDef, other, otherDef, many = true) => {
-      const others = self[otherDef.as || other].get()
-      // console.log('findAndTraverse, others', others)
+    const traverseAssociation = (self, type, typeDef, relName, rel, many = true) => {
+
+      ok(self[relName], `Missing '${ relName } from instance of '${ type }'`)
+
+      const other = rel.of || relName
+      const others = self[relName].get()
+
       if (many) {
         others.map(instance => traverse(other, instance, cb))
       } else {
@@ -95,13 +102,13 @@ const derive = (cache, domain, key) => {
     const { hasMany, hasOne } = typeDef
     // console.log('derive.traverse, o', o)
     Object.keys(hasMany || {})
-    .map(otherTypeName => traverseAssociation(
-      o, type, typeDef, otherTypeName, hasMany[otherTypeName]
+    .map(relName => traverseAssociation(
+      o, type, typeDef, relName, hasMany[relName]
     ))
 
     Object.keys(hasOne || {})
-    .map(otherTypeName => traverseAssociation(
-      o, type, typeDef, otherTypeName, hasOne[otherTypeName], false
+    .map(relName => traverseAssociation(
+      o, type, typeDef, relName, hasOne[relName], false
     ))
   }
 
