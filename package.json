@@ -15,6 +15,10 @@
   },
   "author": "Chris Oloff <chris@uber5.com> (http://about.uber5.com/)",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Uber5/u5-derive.git"
+  },
   "devDependencies": {
     "babel-cli": "6.23.0",
     "babel-plugin-transform-flow-strip-types": "6.22.0",
