@@ -20,9 +20,15 @@ const updateCache = (cache, domain, key, counter) => {
 
     const loader = cache.getLoader(other)
 
-    return cache.mongo.then(db => db.collection(other).find({
-      [rel.foreignKey]: ObjectId(self._id)
-    }).toArray())
+    const query = many
+      ? {
+          [rel.foreignKey]: ObjectId(self._id)
+        }
+      : {
+          _id: ObjectId(self.foreignKey)
+        }
+
+    return cache.mongo.then(db => db.collection(other).find(query).toArray())
     .then(otherInstances => {
 
       // console.log('findAndTraverse, otherInstances', otherInstances.map(i => i._id))
