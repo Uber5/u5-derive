@@ -5,12 +5,16 @@ import { MongoClient } from 'mongodb'
 
 const mongoUrl = process.env.MONGO_URL_TEST || `mongodb://localhost/u5-derive-test`
 
-const mongo = MongoClient.connect(mongoUrl)
+// TODO: exports should be in ./test-setup.js or similar
+export const mongo = MongoClient.connect(mongoUrl)
 
-const simplifiedInsert = (collection, doc) => mongo
+export const simplifiedInsert = (collection, doc) => mongo
   .then(db => db.collection(collection))
   .then(coll => coll.insert(doc))
   .then(r => r.ops[0])
+
+export const findById = (collection, id) => mongo
+  .then(db => db.collection(collection).findOne({ _id: id }))
 
 const journeyWithThreeLegs = () => simplifiedInsert('journeys', {})
   .then(journey => Promise.all([
@@ -74,7 +78,7 @@ describe('simple domain', () => {
     .then(journey => expect(journey._D.numLegs).toBe(1))
   )
 
-  describe.skip('currently broken', () => {
+  describe('linked list', () => {
     it('derives within a linked list', () => journeyWithThreeLegs()
 
       // update (runs declarative logic)

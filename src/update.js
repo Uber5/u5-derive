@@ -20,12 +20,12 @@ const updateCache = (cache, domain, key, counter) => {
 
     const loader = cache.getLoader(other)
 
-    const query = many
+    const query = many || rel.targetTypeHasForeignKey
       ? {
           [rel.foreignKey]: ObjectId(self._id)
         }
       : {
-          _id: ObjectId(self.foreignKey)
+          _id: ObjectId(self[rel.foreignKey])
         }
 
     return cache.mongo.then(db => db.collection(other).find(query).toArray())

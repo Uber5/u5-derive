@@ -35,7 +35,8 @@ export default {
       hasOne: {
         previousLeg: {
           of: 'legs',
-          foreignKey: 'nextLegId'
+          foreignKey: 'nextLegId',
+          targetTypeHasForeignKey: true
         }
       },
       derivedProps: {

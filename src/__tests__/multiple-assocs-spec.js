@@ -14,7 +14,6 @@ const simplifiedInsert = (collection, doc) => mongo
   .then(r => r.ops[0])
 
 const setupClubAndMembers = update => simplifiedInsert('clubs', {})
-  .then(club => { console.log('club', club); return club })
   .then(club => Promise.all([
     club._id,
     Promise.all(R.times(i => simplifiedInsert('members', { clubIdOrdinaryMember: club._id }), 3)),
