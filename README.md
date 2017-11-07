@@ -25,6 +25,21 @@ For now:
 ./node_modules/.bin/supervisor -w src -- -r 'babel-register' src ./sample-domains/things.js
 ```
 
+
+# Run Tests
+
+* Make *sure* you do the configuration to your MongoDB instance below.
+* Note that by default `mongodb://localhost/u5-derive-test` will be used when
+  running the test, as per
+  [simple-domain-spec.js](./src/__tests__/simple-domain-spec.js) (this is not
+  a clean setup...).
+* Once done:
+
+```bash
+npm run test
+```
+
+
 # Configuration
 
 Currently needed:
