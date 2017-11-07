@@ -1,17 +1,16 @@
 # u5-derive
 
-Given
+Given complex business logic in Javascript and MongoDB, derive properties functionally.
 
-* business data in MongoDB,
-* a description of derivable properties (see ./samples/simple/domain.js)
+In other words:
 
-When
-
-* state changes
-
-then
-
-* Derive properties.
+* Given
+  * business data in MongoDB,
+  * a description of derivable properties (see ./samples/simple/domain.js)
+* When
+  * state changes
+* then
+  * Derive properties.
 
 # Status
 
