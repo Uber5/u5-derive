@@ -26,6 +26,7 @@ class Cache {
   }
   getLoader(type) {
     if (!this.loaders[type]) {
+      debug('getting loader for type', type)
       this.loaders[type] = new DataLoader(load(this.mongo, type))
     }
     return this.loaders[type]

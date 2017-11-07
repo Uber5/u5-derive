@@ -2,6 +2,7 @@ import { ok } from 'assert'
 import { ObjectId } from 'mongodb'
 import { transact, derivation } from 'derivable'
 import * as R from 'ramda'
+import invariant from 'invariant'
 
 const debug = require('debug')('u5-derive')
 
@@ -9,7 +10,10 @@ const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
 
 const updateCache = (cache, domain, key, counter) => {
 
-  debug(`updateCache, ${ key }, counter=${ counter }`)
+  invariant(domain.root, 'Domain needs a "root" property')
+  invariant(domain.types && Object.keys(domain.types).length > 0, 'Domain needs "types" property with at least one type')
+
+  debug(`updateCache, domain ${ domain.root }, key=${ key }, counter=${ counter }`)
 
   const findAndTraverse = (self, type, typeDef, relName /* other */, rel /* otherDef */, many = true) => {
 

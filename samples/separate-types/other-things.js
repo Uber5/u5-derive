@@ -1,0 +1,1 @@
+export default {} // the smallest type
