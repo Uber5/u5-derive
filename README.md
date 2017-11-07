@@ -26,6 +26,10 @@ For now:
 ```
 
 
+# Documentation
+
+There is [experimental documentation](./docs.md).
+
 # Run Tests
 
 * Make *sure* you do the configuration to your MongoDB instance below.

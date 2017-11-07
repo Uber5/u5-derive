@@ -8,8 +8,9 @@
     "test": "jest --forceExit",
     "test:watch": "jest --watch --forceExit",
     "build": "babel src --out-dir dist --source-maps --ignore \"**/__tests__/*.js\"",
-    "prepublish": "npm run clean && npm test && mkdir -p dist && npm run build",
+    "prepublish": "npm run clean && npm test && mkdir -p dist && npm run build && npm run doc",
     "clean": "rimraf dist",
+    "doc": "documentation build src -f md -o docs.md",
     "sample:simple": "node -r 'babel-register' ./samples/simple/index.js",
     "sample:clubs": "node -r 'babel-register' ./samples/clubs/index.js"
   },
@@ -21,11 +22,15 @@
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
+    "babel-jest": "21.2.0",
     "babel-plugin-transform-flow-strip-types": "6.22.0",
     "babel-preset-es2015": "6.24.1",
+    "babel-preset-flow": "6.23.0",
     "babel-preset-stage-2": "6.24.1",
+    "documentation": "5.3.3",
     "flow-bin": "0.58.0",
     "jest": "21.2.1",
+    "regenerator-runtime": "0.11.0",
     "rimraf": "2.6.2",
     "source-map-support": "0.5.0",
     "supervisor": "0.12.0"
