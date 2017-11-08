@@ -18,6 +18,14 @@ const typeObjectFromArray = types => types.reduce(
  * This is a bit silly, it really just transforms from one representation
  * to the other... we can design this API better, let's try soon?
  * 
+ * TODO: How to set the name of the function? Do we need example code?
+ * 
+ * ```
+ * import { createDomain } from 'u5-derive'
+ * 
+ * console.log('dummy')
+ * ```
+ * 
  */
 
 export default (root: String, types: Array) => {
