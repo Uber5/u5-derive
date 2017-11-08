@@ -27,7 +27,7 @@ For now:
 
 # Documentation
 
-There is [experimental documentation](./docs.md).
+There is [experimental documentation](https://uber5.github.io/u5-derive/public/current/).
 
 # Run Tests
 
