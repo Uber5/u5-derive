@@ -19,8 +19,9 @@ const typeObjectFromArray = types => types.reduce(
  * to the other... we can design this API better, let's try soon?
  * 
  * TODO: How to set the name of the function? Do we need example code?
+ * TODO: We can define `types` better (via flow types)
  * 
- * ```
+ * ```javascript
  * import { createDomain } from 'u5-derive'
  * 
  * console.log('dummy')
