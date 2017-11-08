@@ -70,11 +70,13 @@
 describing the domain.</p>
 <p>This is a bit silly, it really just transforms from one representation
 to the other... we can design this API better, let's try soon?</p>
-<p>TODO: How to set the name of the function? Do we need example code?</p>
-<pre><code>import { createDomain } from 'u5-derive'
+<p>TODO: How to set the name of the function? Do we need example code? Answer:
+We would have to keep the function in a file <code>createDomain</code>, which we don't
+want due to <a href="https://stackoverflow.com/a/20927507/748139">this issue</a>.
+TODO: We can define <code>types</code> better (via flow types)</p>
+<pre class='hljs'><span class="hljs-keyword">import</span> { createDomain } <span class="hljs-keyword">from</span> <span class="hljs-string">'u5-derive'</span>
 
-console.log('dummy')
-</code></pre>
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'dummy'</span>)</pre>
 
 
   <div class='pre p1 fill-light mt0'>create-domain(root: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>, types: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</div>
