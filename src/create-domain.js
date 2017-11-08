@@ -11,6 +11,11 @@ const typeObjectFromArray = types => types.reduce(
   {}
 )
 
+type Type = {
+  type: string,
+  definition: any
+}
+
 /**
  * Create a domain (required to call the `update` function) from an object
  * describing the domain.
@@ -33,11 +38,6 @@ const typeObjectFromArray = types => types.reduce(
  * ... and then use the `domain` when calling `update()`.
  * 
  */
-
-type Type = {
-  type: string,
-  definition: any
-}
 
 export default (root: string, types: Array<Type>) => {
   invariant(root, '"root" must be provided')
