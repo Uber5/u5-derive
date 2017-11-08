@@ -11,7 +11,7 @@ if [ $CURRENT_BRANCH != gh-pages ]; then
   exit 1
 fi
 
-git merge master
+git merge master --no-commit
 git commit -m "merged master into doc branch"
 rm -rf public/current/* public/versioned/$VERSION
 mkdir public/versioned/$VERSION
