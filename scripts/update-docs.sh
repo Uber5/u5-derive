@@ -18,5 +18,8 @@ mkdir public/versioned/$VERSION
 npm run doc
 cp -r ./docs/* ./public/current/
 cp -r ./docs/* ./public/versioned/$VERSION/
+git add public
+git commit -m "Updated documentation"
+git push origin gh-pages
 
 echo "done"
