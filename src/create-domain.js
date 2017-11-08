@@ -18,7 +18,9 @@ const typeObjectFromArray = types => types.reduce(
  * This is a bit silly, it really just transforms from one representation
  * to the other... we can design this API better, let's try soon?
  * 
- * TODO: How to set the name of the function? Do we need example code?
+ * TODO: How to set the name of the function? Do we need example code? Answer:
+ * We would have to keep the function in a file `createDomain`, which we don't
+ * want due to [this issue](https://stackoverflow.com/a/20927507/748139).
  * TODO: We can define `types` better (via flow types)
  * 
  * ```javascript
