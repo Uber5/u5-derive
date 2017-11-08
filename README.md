@@ -29,6 +29,11 @@ For now:
 
 There is [experimental documentation](https://uber5.github.io/u5-derive/public/current/).
 
+## Generate Documentation
+
+Checkout `gh-pages` branch, then run `./scripts/update-docs.sh`. (It *should*
+merge master and build docs etc.)
+
 # Run Tests
 
 * Make *sure* you do the configuration to your MongoDB instance below.
