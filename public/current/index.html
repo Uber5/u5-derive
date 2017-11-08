@@ -25,9 +25,9 @@
               
                 
                 <li><a
-                  href='#create-domain'
+                  href='#type'
                   class="">
-                  create-domain
+                  Type
                   
                 </a>
                 
@@ -58,8 +58,8 @@
   
   <div class='clearfix'>
     
-    <h3 class='fl m0' id='create-domain'>
-      create-domain
+    <h3 class='fl m0' id='type'>
+      Type
     </h3>
     
     
@@ -70,49 +70,52 @@
 describing the domain.</p>
 <p>This is a bit silly, it really just transforms from one representation
 to the other... we can design this API better, let's try soon?</p>
-<p>TODO: How to set the name of the function? Do we need example code? Answer:
-We would have to keep the function in a file <code>createDomain</code>, which we don't
-want due to <a href="https://stackoverflow.com/a/20927507/748139">this issue</a>.
-TODO: We can define <code>types</code> better (via flow types)</p>
-<pre class='hljs'><span class="hljs-keyword">import</span> { createDomain } <span class="hljs-keyword">from</span> <span class="hljs-string">'u5-derive'</span>
+<p>If your goal is to keep types in separate files, use it like this:</p>
+<pre class='hljs'><span class="hljs-keyword">const</span> domain = createDomain(
+  <span class="hljs-string">'things'</span>,
+  [
+    { <span class="hljs-attr">type</span>: <span class="hljs-string">'things'</span>, <span class="hljs-attr">definition</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'./things'</span>).default },
+    { <span class="hljs-attr">type</span>: <span class="hljs-string">'otherThings'</span>, <span class="hljs-attr">definition</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'./other-things'</span>).default }
+  ]
+ )</pre>
+<p>... and then use the <code>domain</code> when calling <code>update()</code>.</p>
 
-<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'dummy'</span>)</pre>
 
-
-  <div class='pre p1 fill-light mt0'>create-domain(root: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>, types: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</div>
+  <div class='pre p1 fill-light mt0'>Type</div>
   
-  
-
-  
-  
-  
-  
+    <p>
+      Type:
+      {type: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, definition: any}
+    </p>
   
   
 
   
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
       
         <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>root</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>)</code>
-	    
-          </div>
+          <span class='code bold'>type</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+          
           
         </div>
       
         <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>types</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</code>
-	    
-          </div>
+          <span class='code bold'>definition</span> <code class='quiet'>(any)</code>
+          
           
         </div>
       
     </div>
-  
-
   
 
   
