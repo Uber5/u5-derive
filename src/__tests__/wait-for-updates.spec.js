@@ -5,15 +5,37 @@ import { mongoUrl, tailUrl, tailDatabaseName } from './config'
  * (to root instances of the domain) are finished.
  */
 
+import { writeFileSync } from 'fs'
 import { MongoClient } from 'mongodb'
 
 const wrapCollectionObj = original => {
   const wrapper = {}
   for (let prop in original) {
     if (typeof(original[prop]) === 'function') {
-      wrapper[prop] = function() {
-        console.log('calling collection Fn', prop)
-        return original[prop].apply(this, arguments)
+      const fnName = prop
+      wrapper[fnName] = function() {
+        console.log('calling collection Fn', fnName)
+        const result = original[fnName].apply(this, arguments)
+        switch(fnName) {
+        case 'insertOne':
+          // add *something* (sync!) to remember we have to wait
+          // add something (async!) to wait for the result of 'insertOne',
+          // ... and afterwards, use the _id added to determine the roots we have
+          // to wait for
+          result.then(() => {
+            // TODO: we should get the inserted _id from the result
+            setTimeout(
+              () => {
+                console.log(`insertOne done, arg[0]._id=${arguments[0]._id}`)
+              },
+              1000
+            )
+          })
+        break
+        default:
+          // do nothing
+        }
+        return result
       }
     } else {
       wrapper[prop] = original[prop]
@@ -53,8 +75,9 @@ const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
     }
   }
 
-  wrapper.domainUpdatesDone = () => {
-    throw new Error('oops')
+  wrapper.updateDomainNow = async () => {
+    // throw new Error('oops')
+    return new Promise(res => setTimeout(() => res(), 2000))
   }
 
   return wrapper
@@ -91,7 +114,13 @@ describe('Waiting for updates', () => {
     }
     await parts.insertOne(part)
     console.log('part', part)
-    await db.domainUpdatesDone()
+
+    // TODO: we want a bit more here: If we do not
+    // say "make sure all domain updates are done", then
+    // a debounce'd update should kick in.
+    // if we *do* say we want them done, then we should trigger them
+    // immediately and wait until they are finished.
+    await db.updateDomainNow()
     const thingAgain = await things.findOne({ _id: thing._id })
     // now we expect derived properties in '_D' in 'thingAgain' to be updated
   })
