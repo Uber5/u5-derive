@@ -7,10 +7,25 @@ import { mongoUrl, tailUrl, tailDatabaseName } from './config'
 
 import { MongoClient } from 'mongodb'
 
+const wrapCollectionObj = original => {
+  const wrapper = {}
+  for (let prop in original) {
+    if (typeof(original[prop]) === 'function') {
+      wrapper[prop] = function() {
+        console.log('calling collection Fn', prop)
+        return original[prop].apply(this, arguments)
+      }
+    } else {
+      wrapper[prop] = original[prop]
+    }
+  }
+  return wrapper
+}
+
 const wrapCollectionFn = db => function() {
   const coll = db.collection.apply(this, arguments)
   console.log('getting collection', arguments[0])
-  return coll
+  return wrapCollectionObj(coll)
 }
 
 const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
