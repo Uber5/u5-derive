@@ -1,13 +1,46 @@
-import { mongo } from './config'
+import { mongoUrl, tailUrl, tailDatabaseName } from './config'
 
 /**
  * Idea: we should be able to wait via a Promise until all expected updates
  * (to root instances of the domain) are finished.
  */
 
+import { MongoClient } from 'mongodb'
+
+const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
+  const wrappedDb = await MongoClient.connect(mongoUrl)
+
+  // we must wrap the Collection class 
+  // ... and then record all root ids that we need to run an update on, for
+  // each function that changes a type we know in the domain
+
+  const wrapper = {}
+  for (let prop in wrappedDb) {
+    if (typeof(wrappedDb[prop]) === 'function') {
+      wrapper[prop] = function() {
+        console.log('calling', prop)
+        return wrappedDb[prop].apply(this, arguments)
+      }
+    } else {
+      wrapper[prop] = wrappedDb[prop]
+    }
+  }
+
+  wrapper.domainUpdatesDone = () => {
+    throw new Error('oops')
+  }
+
+  return wrapper
+}
+
 describe('Waiting for updates', () => {
   it('works', async () => {
-    const db = await mongo
+    const db = await domainMongo({
+      domain: undefined,
+      mongoUrl,
+      tailUrl,
+      tailDatabaseName
+    })
     const things = db.collection('things')
     const parts = db.collection('parts')
     const thing = { name: `New thing at ${new Date}` }
@@ -19,5 +52,8 @@ describe('Waiting for updates', () => {
     }
     await parts.insertOne(part)
     console.log('part', part)
+    await db.domainUpdatesDone()
+    const thingAgain = await things.findOne({ _id: thing._id })
+    // now we expect derived properties in '_D' in 'thingAgain' to be updated
   })
 })
