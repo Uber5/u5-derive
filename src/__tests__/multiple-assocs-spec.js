@@ -17,7 +17,7 @@ const setupClubAndMembers = update => simplifiedInsert('clubs', {})
   .then(club => Promise.all([
     club._id,
     Promise.all(R.times(i => simplifiedInsert('members', { clubIdOrdinaryMember: club._id }), 3)),
-    Promise.all(R.times(i => simplifiedInsert('members', { clubIdOrdinaryMember: club._id }), 5)),
+    Promise.all(R.times(i => simplifiedInsert('members', { clubIdVipMember: club._id }), 5)),
   ]))
   .then(([ clubId ]) => Promise.all([ clubId, update(clubId) ]))
   .then(([ clubId ]) => Promise.all([
