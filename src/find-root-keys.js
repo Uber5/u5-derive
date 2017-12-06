@@ -5,6 +5,6 @@ type Domain = {
   types: Object
 }
 
-export default (domain: Domain, type: string, instance: Object): Array<string> => {
-  return []
+export default (domain: Domain, type: string, instance: Object): Set<string> => {
+  return new Set()
 }

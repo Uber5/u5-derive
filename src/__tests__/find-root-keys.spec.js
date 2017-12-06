@@ -11,7 +11,7 @@ describe('find root keys, given a document (type and instance) that supposedly w
 
     it('gives us an empty array', async () => {
       const keys = await findRootKeys(domain, 'no-type', {})
-      expect(keys).toEqual([])
+      expect(keys).toEqual(new Set())
     })
 
   })

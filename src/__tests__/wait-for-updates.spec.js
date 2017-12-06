@@ -1,35 +1,55 @@
 import { mongoUrl, tailUrl, tailDatabaseName } from './config'
+import findRootKeys from '../find-root-keys'
 
 /**
  * Idea: we should be able to wait via a Promise until all expected updates
  * (to root instances of the domain) are finished.
  */
 
-import { writeFileSync } from 'fs'
 import { MongoClient } from 'mongodb'
+import { Cache } from '../index';
 
-const wrapCollectionObj = original => {
+const initResolverWhenDoneWaiting = state => {
+  if (state.resolver) {
+    state.resolver()
+  }
+  state.resolvedWhenDoneWaiting = new Promise(res => state.resolver = res)
+}
+
+const enqueue = state => {
+  if (state.numWaiting++ === 0) {
+    initResolverWhenDoneWaiting(state)
+  }
+  console.log('enqueue, numWaiting', state.numWaiting)
+}
+
+const dequeue = state => {
+  state.numWaiting -= 1
+  console.log('dequeue, numWaiting', state.numWaiting)
+  if (state.numWaiting === 0) {
+    initResolverWhenDoneWaiting(state)
+  }
+}
+
+const wrapCollectionObj = (original, collName, state) => {
   const wrapper = {}
   for (let prop in original) {
     if (typeof(original[prop]) === 'function') {
       const fnName = prop
       wrapper[fnName] = function() {
-        console.log('calling collection Fn', fnName)
+        // console.log('calling collection Fn', fnName)
         const result = original[fnName].apply(this, arguments)
         switch(fnName) {
         case 'insertOne':
-          // add *something* (sync!) to remember we have to wait
-          // add something (async!) to wait for the result of 'insertOne',
-          // ... and afterwards, use the _id added to determine the roots we have
-          // to wait for
-          result.then(() => {
-            // TODO: we should get the inserted _id from the result
-            setTimeout(
-              () => {
-                console.log(`insertOne done, arg[0]._id=${arguments[0]._id}`)
-              },
-              1000
-            )
+          enqueue(state)
+          result.then(async res => {
+            console.log(`insertOne done, insertedId:`, res.insertedId)
+            const rootKeys = await findRootKeys(state.domain, collName, arguments)
+            rootKeys.forEach(k => state.rootKeysToUpdate.add(k))
+            dequeue(state)
+          }).catch(err => {
+            dequeue(state)
+            throw err
           })
         break
         default:
@@ -44,14 +64,28 @@ const wrapCollectionObj = original => {
   return wrapper
 }
 
-const wrapCollectionFn = db => function() {
+const wrapCollectionFn = (db, state) => function() {
   const coll = db.collection.apply(this, arguments)
-  console.log('getting collection', arguments[0])
-  return wrapCollectionObj(coll)
+  const collectionName = arguments[0]
+  // console.log('getting collection', collectionName)
+  if (!state.collectionWrappers[collectionName]) {
+    state.collectionWrappers[collectionName] = wrapCollectionObj(coll, collectionName, state)
+  }
+  return state.collectionWrappers[collectionName]
 }
 
 const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
   const wrappedDb = await MongoClient.connect(mongoUrl)
+
+  const cache = new Cache(wrappedDb)
+
+  const state = {
+    collectionWrappers: {}, // maps collection name to collection wrapper
+    domain,
+    numWaiting: 0,
+    rootKeysToUpdate: new Set()
+  }
+  initResolverWhenDoneWaiting(state)
 
   // we must wrap the Collection class 
   // ... and then record all root ids that we need to run an update on, for
@@ -61,23 +95,31 @@ const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
   for (let prop in wrappedDb) {
     if (typeof(wrappedDb[prop]) === 'function') {
       switch(prop) {
-        case 'collection':
-          wrapper.collection = wrapCollectionFn(wrappedDb)
-          break
-        default:
-          wrapper[prop] = function() {
-            console.log('calling', prop)
-            return wrappedDb[prop].apply(this, arguments)
-          }
+      case 'collection':
+        wrapper.collection = wrapCollectionFn(wrappedDb, state)
+        break
+      default:
+        wrapper[prop] = wrappedDb[prop]
       }
     } else {
       wrapper[prop] = wrappedDb[prop]
     }
   }
 
+  const update = key => _update(cache, domain, key)
+
   wrapper.updateDomainNow = async () => {
-    // throw new Error('oops')
-    return new Promise(res => setTimeout(() => res(), 2000))
+    const promise = state.resolvedWhenDoneWaiting
+    if (state.numWaiting === 0) {
+      initResolverWhenDoneWaiting(state)
+    }
+    const rootKeys = state.rootKeysToUpdate
+    state.rootKeysToUpdate = new Set()
+    return promise.then(
+      async () => Promise.all(
+        Array.from(rootKeys.keys()).map(async key => update(key))
+      )
+    )
   }
 
   return wrapper
@@ -91,13 +133,16 @@ const hasCollection = async (name, db) => {
 describe('Waiting for updates', () => {
   it('works', async () => {
     const db = await domainMongo({
-      domain: undefined,
+      domain: undefined, // TODO: useless without domain...
       mongoUrl,
       tailUrl,
       tailDatabaseName
     })
     const things = db.collection('things')
     const parts = db.collection('parts')
+    // TODO: just to request the same collection again (triggers
+    // cache of Collection instance wrappers)
+    const partsAgain = db.collection('parts')
     const thing = { name: `New thing at ${new Date}` }
     await things.insertOne(thing)
 
@@ -107,13 +152,13 @@ describe('Waiting for updates', () => {
       hasCollection('things', db)
     ).toBeTruthy()
 
-    console.log('thing', thing)
+    // console.log('thing', thing)
     const part = {
       name: `This is a part of thing ${thing._id}`,
       thingId: thing._id
     }
     await parts.insertOne(part)
-    console.log('part', part)
+    // console.log('part', part)
 
     // TODO: we want a bit more here: If we do not
     // say "make sure all domain updates are done", then
@@ -121,6 +166,7 @@ describe('Waiting for updates', () => {
     // if we *do* say we want them done, then we should trigger them
     // immediately and wait until they are finished.
     await db.updateDomainNow()
+    console.log('updateDomainNow, done')
     const thingAgain = await things.findOne({ _id: thing._id })
     // now we expect derived properties in '_D' in 'thingAgain' to be updated
   })
