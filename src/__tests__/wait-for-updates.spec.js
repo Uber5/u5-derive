@@ -7,6 +7,12 @@ import { mongoUrl, tailUrl, tailDatabaseName } from './config'
 
 import { MongoClient } from 'mongodb'
 
+const wrapCollectionFn = db => function() {
+  const coll = db.collection.apply(this, arguments)
+  console.log('getting collection', arguments[0])
+  return coll
+}
+
 const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
   const wrappedDb = await MongoClient.connect(mongoUrl)
 
@@ -17,9 +23,15 @@ const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
   const wrapper = {}
   for (let prop in wrappedDb) {
     if (typeof(wrappedDb[prop]) === 'function') {
-      wrapper[prop] = function() {
-        console.log('calling', prop)
-        return wrappedDb[prop].apply(this, arguments)
+      switch(prop) {
+        case 'collection':
+          wrapper.collection = wrapCollectionFn(wrappedDb)
+          break
+        default:
+          wrapper[prop] = function() {
+            console.log('calling', prop)
+            return wrappedDb[prop].apply(this, arguments)
+          }
       }
     } else {
       wrapper[prop] = wrappedDb[prop]
@@ -31,6 +43,11 @@ const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
   }
 
   return wrapper
+}
+
+const hasCollection = async (name, db) => {
+  return (await db.collections())
+    .filter(c => c.collectionName === 'things') > 0
 }
 
 describe('Waiting for updates', () => {
@@ -45,6 +62,13 @@ describe('Waiting for updates', () => {
     const parts = db.collection('parts')
     const thing = { name: `New thing at ${new Date}` }
     await things.insertOne(thing)
+
+    // just double check we call still use the 'collections' function
+    // (which should *not* be wrapped)
+    expect(
+      hasCollection('things', db)
+    ).toBeTruthy()
+
     console.log('thing', thing)
     const part = {
       name: `This is a part of thing ${thing._id}`,
