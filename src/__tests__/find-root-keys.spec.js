@@ -10,7 +10,9 @@ describe('find root keys, given a document (type and instance) that supposedly w
     }
 
     it('gives us an empty array', async () => {
-      const keys = await findRootKeys(domain, 'no-type', {})
+      const keys = await findRootKeys(
+        domain, query => Promise.reject(), 'no-type', {}
+      )
       expect(keys).toEqual(new Set())
     })
 
