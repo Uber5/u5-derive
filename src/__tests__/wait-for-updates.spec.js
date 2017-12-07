@@ -1,5 +1,6 @@
 import { mongoUrl, tailUrl, tailDatabaseName } from './config'
 import findRootKeys, { Domain } from '../find-root-keys'
+import { update as _update } from '../update'
 
 /**
  * Idea: we should be able to wait via a Promise until all expected updates
@@ -44,13 +45,13 @@ const wrapCollectionObj = (original, collName, state) => {
             enqueue(state)
             result.then(async res => {
               console.log(`insertOne done, insertedId:`, res.insertedId)
-              const rootKeys = await findRootKeys(
+              await findRootKeys(
                 state.domain,
-                state.db.collection(collName).findOne,
+                state.db,
                 collName,
-                arguments
+                arguments[0],
+                state.rootKeysToUpdate
               )
-              rootKeys.forEach(k => state.rootKeysToUpdate.add(k))
               dequeue(state)
             }).catch(err => {
               dequeue(state)
@@ -82,7 +83,8 @@ const wrapCollectionFn = (db, state) => function () {
 const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
   const wrappedDb = await MongoClient.connect(mongoUrl)
 
-  const cache = new Cache(wrappedDb)
+  // TODO: Cache should have resolved promise of connect() as constructor arg?
+  const cache = new Cache(MongoClient.connect(mongoUrl))
 
   const state = {
     collectionWrappers: {}, // maps collection name to collection wrapper
@@ -119,11 +121,15 @@ const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
     if (state.numWaiting === 0) {
       initResolverWhenDoneWaiting(state)
     }
-    const rootKeys = state.rootKeysToUpdate
+    const rootKeys = Array.from(state.rootKeysToUpdate)
+    console.log('updateDomainNow, rootKeys', rootKeys)
     state.rootKeysToUpdate = new Set()
     return promise.then(
       async () => Promise.all(
-        Array.from(rootKeys.keys()).map(async key => update(key))
+        Array.from(rootKeys).map(async key => {
+          console.log('About to update (from rootKeys)', key)
+          return update(key)
+        })
       )
     )
   }
@@ -148,8 +154,8 @@ const domain: Domain = {
       },
       hasOne: {},
       derivedProps: {
-        weight: {
-          f: self => self.parts.get().map(part => part.weight)
+        totalWeight: {
+          f: self => self.parts.get().map(part => part.weight).reduce((sum, v) => sum + v, 0)
         }
       }
     },

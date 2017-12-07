@@ -1,20 +1,7 @@
 // @flow
 import { isEmpty } from 'ramda'
-
-export type DomainType = {
-  hasMany: any,
-  hasOne: any,
-  derivedProps: any
-}
-
-export type Types = {
-  [string]: DomainType
-}
-
-export type Domain = {
-  root: string,
-  types: Types
-}
+import { DomainType } from './domain'
+import { Db } from 'mongodb'
 
 const hasManyOfType = (type: DomainType, typeName: string): boolean => 
   type.hasMany && type.hasMany[typeName] && type.hasMany[typeName].of === typeName
@@ -33,11 +20,13 @@ const getReferringTypes = (domain: Domain, typeName: string) => {
 
 const findRootKeys = async (
   domain: Domain,
-  findOne: (query: Object) => Promise,
+  db: Db,
   type: string,
   instance: Object,
   rootKeys = new Set(): Set<string>
 ): Set<string> => {
+
+  // TODO: we have to check if this type/instance._id has been visited already
 
   const assocTypes = [ 'hasOne', 'hasMany' ]
   const referringTypes = getReferringTypes(domain, type)
@@ -51,11 +40,12 @@ const findRootKeys = async (
         if (assoc.of === type) {
           console.log(`findRootKeys, type=${type}, otherName=${otherName}, foreignKey=${assoc.foreignKey}`)
           if (otherName === domain.root) {
+            console.log('Adding rootKey', instance, instance[assoc.foreignKey])
             rootKeys.add(instance[assoc.foreignKey])
           } else {
-            console.log('About to findOne', otherName, assoc.foreignKey, instance)
-            const otherInstance = await findOne({ _id: instance[assoc.foreignKey] })
-            await findRootKeys(domain, findOne, otherType, otherInstance, rootKeys)
+            const otherInstance = await db.collection(otherName).findOne({ _id: instance[assoc.foreignKey] })
+            console.log('findRootKeys (recurse)', otherName, assoc.foreignKey, instance, otherInstance)
+            await findRootKeys(domain, db, otherName, otherInstance, rootKeys)
           }
         }
       }
