@@ -121,13 +121,19 @@ describe('domainMongo', () => {
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + 1)
     })
 
-    it('works for "deleteOne', async () => {
-      const weightWeAreLosing = parts[0].weight
-      const currentTotalWeight = sum(map(p => p.weight, parts))
-      await Parts.deleteOne({ _id: parts[0]._id })
-      await db.updateDomainNow()
-      const thingUpdated = await Things.findOne({ _id: thing._id })
-      expect(thingUpdated._D.totalWeight).toBe(currentTotalWeight - weightWeAreLosing)
+    for (let fn of [ 'deleteOne', 'findOneAndDelete' ]) {
+      it(`works for ${fn}`, async () => {
+        const weightWeAreLosing = parts[0].weight
+        const currentTotalWeight = sum(map(p => p.weight, parts))
+        await Parts[fn]({ _id: parts[0]._id }) // will try "deleteOne" etc
+        await db.updateDomainNow()
+        const thingUpdated = await Things.findOne({ _id: thing._id })
+        expect(thingUpdated._D.totalWeight).toBe(currentTotalWeight - weightWeAreLosing)
+      })
+    }
+
+    it('rejects "findAndModify" as deprecated', () => {
+      expect(() => Parts.findAndModify()).toThrow()
     })
 
   })

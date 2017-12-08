@@ -7,6 +7,7 @@
     "dev": "supervisor -w ./src -- -r 'babel-register' src ./sample-domains/things.js",
     "test": "jest --forceExit",
     "test:watch": "jest --watch --forceExit",
+    "coverage": "npm run test -- --coverage",
     "build": "babel src --out-dir dist --source-maps --ignore \"**/__tests__/*.js\"",
     "prepublish": "npm run clean && npm test && mkdir -p dist && npm run build && npm run doc",
     "clean": "rimraf dist",

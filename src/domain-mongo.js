@@ -35,9 +35,11 @@ const wrapCollectionObj = (original, collName, state) => {
     if (typeof (original[prop]) === 'function') {
       const fnName = prop
       wrapper[fnName] = function () {
-        // debug('calling collection Fn', fnName)
+
+        debug(`calling collection fn ${fnName} for collection ${collName}.`)
 
         switch (fnName) {
+          case 'findOneAndDelete':
           case 'deleteOne':
             const filter = arguments[0]
             return wrapper.findOne(filter).then(async doc => {
@@ -50,18 +52,20 @@ const wrapCollectionObj = (original, collName, state) => {
               )
               enqueue(state)
             })
-            .then(() => original.deleteOne.apply(this, arguments))
+            .then(() => original.deleteOne.apply(original, arguments))
             .then(res => {
               dequeue(state)
               return res
             })
             .catch(err => { dequeue(state); throw err })
+          case 'findAndModify':
+            throw new Error(`${fnName} is deprecated, therefore not supported by u5-derive any more.`)
           default: // fall through
         }
 
         // if we didn't return above (we sometimes so), then we call
         // the original function now
-        const result = original[fnName].apply(this, arguments)
+        const result = original[fnName].apply(original, arguments)
 
         // and sometimes do some processing afterwards
         switch (fnName) {
