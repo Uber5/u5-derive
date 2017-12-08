@@ -1,7 +1,9 @@
 // @flow
+import { Db } from 'mongodb'
 import { isEmpty } from 'ramda'
 import { DomainType } from './domain'
-import { Db } from 'mongodb'
+
+const debug = require('debug')('u5-derive:find-root-keys')
 
 const hasManyOfType = (type: DomainType, typeName: string): boolean => 
   type.hasMany && type.hasMany[typeName] && type.hasMany[typeName].of === typeName
@@ -13,7 +15,7 @@ const hasAnyOfType = (type, typeName) =>
 
 const getReferringTypes = (domain: Domain, typeName: string) => {
   return Object.entries(domain.types).filter(([ referringType, typeDef ]) => {
-    // console.log('getReferringTypes', referringType, typeDef)
+    debug('getReferringTypes', referringType, typeDef)
     return hasAnyOfType(typeDef, typeName)
   })
 }
@@ -30,21 +32,21 @@ const findRootKeys = async (
 
   const assocTypes = [ 'hasOne', 'hasMany' ]
   const referringTypes = getReferringTypes(domain, type)
-  console.log('referringTypes', referringTypes, 'type', type)
+  debug('referringTypes', referringTypes, 'type', type)
   for (let [ otherName, otherType ] of referringTypes) {
-    console.log('referringType', otherName, otherType)
+    debug('referringType', otherName, otherType)
     for (let assocType of assocTypes) { // hasOne, hasMany
       const assocs = otherType && otherType[assocType]
       const assocEntries = Object.entries(assocs || {})
       for (let [ assocName, assoc ] of assocEntries) {
         if (assoc.of === type) {
-          console.log(`findRootKeys, type=${type}, otherName=${otherName}, foreignKey=${assoc.foreignKey}`)
+          debug(`findRootKeys, type=${type}, otherName=${otherName}, foreignKey=${assoc.foreignKey}`)
           if (otherName === domain.root) {
-            console.log('Adding rootKey', instance, instance[assoc.foreignKey])
+            debug('Adding rootKey', instance, instance[assoc.foreignKey])
             rootKeys.add(instance[assoc.foreignKey])
           } else {
             const otherInstance = await db.collection(otherName).findOne({ _id: instance[assoc.foreignKey] })
-            console.log('findRootKeys (recurse)', otherName, assoc.foreignKey, instance, otherInstance)
+            debug('findRootKeys (recurse)', otherName, assoc.foreignKey, instance, otherInstance)
             await findRootKeys(domain, db, otherName, otherInstance, rootKeys)
           }
         }

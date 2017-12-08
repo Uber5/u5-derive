@@ -31,7 +31,6 @@ export const tailAndInvalidate = (url, dbName, cache) => {
   oplog.on('delete', doc => {
     const type = doc.ns.match(`^${ dbName }\.(.+)$`)[1]
     const key = doc.o._id
-    console.log('DELETE', doc)
     invalidate(type, key)
   })
 
