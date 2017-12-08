@@ -1,4 +1,5 @@
-import { MongoClient } from 'mongodb'
+//@flow
+import { MongoClient, Db } from 'mongodb'
 
 import findRootKeys from './find-root-keys'
 import { Domain } from './domain'
@@ -41,8 +42,10 @@ const wrapCollectionObj = (original, collName, state) => {
         switch (fnName) {
           case 'findOneAndDelete':
           case 'deleteOne':
+          {
             const filter = arguments[0]
             return wrapper.findOne(filter).then(async doc => {
+              enqueue(state)
               await findRootKeys(
                 state.domain,
                 state.db,
@@ -50,7 +53,6 @@ const wrapCollectionObj = (original, collName, state) => {
                 doc,
                 state.rootKeysToUpdate
               )
-              enqueue(state)
             })
             .then(() => original.deleteOne.apply(original, arguments))
             .then(res => {
@@ -58,6 +60,33 @@ const wrapCollectionObj = (original, collName, state) => {
               return res
             })
             .catch(err => { dequeue(state); throw err })
+          }
+          case 'deleteMany':
+          {
+            if (collName === state.domain.root) {
+              // don't do anything, as root instance(s) will disappear, which
+              // leaves nothing to update
+              break
+            }
+            const filter = arguments[0]
+            return wrapper.find(filter).toArray().then(async docs => {
+              enqueue(state)
+              for (let doc of docs) {
+                debug(`deleteMany, adding root key, id`, doc._id)
+                await findRootKeys(
+                  state.domain,
+                  state.db,
+                  collName,
+                  doc,
+                  state.rootKeysToUpdate
+                )  
+              }
+            }).then(
+              () => original[fnName].apply(original, arguments)
+            ).then(() => {
+              dequeue(state)
+            }).catch(err => { dequeue(state); throw err })
+          }
           case 'findAndModify':
             throw new Error(`${fnName} is deprecated, therefore not supported by u5-derive any more.`)
           default: // fall through
@@ -122,7 +151,9 @@ const wrapCollectionFn = (db, state) => function () {
   return state.collectionWrappers[collectionName]
 }
 
-const domainMongo = async ({ domain, mongoUrl }) => {
+const domainMongo = async (
+  { domain, mongoUrl }: { domain: Domain, mongoUrl: string }
+): Db => {
   const wrappedDb = await MongoClient.connect(mongoUrl)
 
   // TODO: Cache should have resolved promise of connect() as constructor arg?

@@ -136,5 +136,21 @@ describe('domainMongo', () => {
       expect(() => Parts.findAndModify()).toThrow()
     })
 
+    it('works for "deleteMany"', async () => {
+      await Parts.deleteMany({
+        _id: { $in: [ parts[0]._id, parts[1]._id ]}
+      })
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      expect(thingUpdated._D.totalWeight).toBe(parts[2].weight)
+    })
+
+    it('"deleteMany" also works for a root instance', async () => {
+      await Things.deleteMany({ _id: { $in: [ thing._id ] } })
+      await db.updateDomainNow()
+      const findResult = await Things.find({ _id: thing._id }).toArray()
+      expect(findResult.length).toBe(0)
+    })
+
   })
 })
