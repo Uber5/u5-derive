@@ -1,4 +1,5 @@
-import { mongoUrl, tailUrl, tailDatabaseName } from './config'
+import { times } from 'ramda'
+import { mongoUrl } from './config'
 import domainMongo from '../domain-mongo'
 
 /**
@@ -29,19 +30,14 @@ const domain: Domain = {
 }
 
 describe('domainMongo', () => {
+
   it('updateDomainNow works in a simple case', async () => {
     const db = await domainMongo({
       domain,
-      mongoUrl,
-      tailUrl,
-      tailDatabaseName
+      mongoUrl
     })
     const things = db.collection('things')
     const parts = db.collection('parts')
-
-    // just to request the same collection again (triggers
-    // cache of Collection instance wrappers)
-    const partsAgain = db.collection('parts')
 
     const thing = { name: `New thing at ${new Date}` }
     await things.insertOne(thing)
@@ -68,9 +64,7 @@ describe('domainMongo', () => {
   it('caches collection instances', async () => {
     const db = await domainMongo({
       domain,
-      mongoUrl,
-      tailUrl,
-      tailDatabaseName
+      mongoUrl
     })
     const things = db.collection('things')
     const thingsAgain = db.collection('things')
@@ -80,9 +74,7 @@ describe('domainMongo', () => {
   it('allows me to use the "collections" function', async () => {
     const db = await domainMongo({
       domain,
-      mongoUrl,
-      tailUrl,
-      tailDatabaseName
+      mongoUrl
     })
 
     const things = db.collection('things')
@@ -98,4 +90,37 @@ describe('domainMongo', () => {
     ).toBeTruthy()
   })
 
+  describe('given a simple domain and db state', () => {
+
+    let db, thing, parts, Things, Parts
+
+    beforeEach(async () => {
+      db = await domainMongo({ domain, mongoUrl })
+      Things = db.collection('things')
+      Parts = db.collection('parts')
+      thing = { desc: 'simple domain and db state tests, ' + new Date() }
+      await Things.insertOne(thing)
+      parts = await Promise.all(times(
+        () => Parts.insertOne({
+          thingId: thing._id,
+          weight: Math.floor(Math.random() * 100)
+        }),
+        3
+      ))
+      await db.updateDomainNow()
+
+      // refresh documents from db
+      thing = await Things.findOne({ _id: thing._id })
+      parts = await Parts.find({ thingId: thing._id }).toArray()
+    })
+
+    it('works for "findOneAndUpdate', async () => {
+      await Parts.findOneAndUpdate({ _id: parts[0]._id }, { $inc: { weight: 1 }})
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      console.log("thing, thingUpdated", thing, thingUpdated)
+      expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + 1)
+    })
+
+  })
 })

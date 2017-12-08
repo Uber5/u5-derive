@@ -77,7 +77,7 @@ const wrapCollectionFn = (db, state) => function () {
   return state.collectionWrappers[collectionName]
 }
 
-const domainMongo = async ({ domain, mongoUrl, tailUrl, tailDatabaseName }) => {
+const domainMongo = async ({ domain, mongoUrl }) => {
   const wrappedDb = await MongoClient.connect(mongoUrl)
 
   // TODO: Cache should have resolved promise of connect() as constructor arg?
