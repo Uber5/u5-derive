@@ -1,4 +1,4 @@
-import { times } from 'ramda'
+import { map, sum, times } from 'ramda'
 import { mongoUrl } from './config'
 import domainMongo from '../domain-mongo'
 
@@ -118,8 +118,16 @@ describe('domainMongo', () => {
       await Parts.findOneAndUpdate({ _id: parts[0]._id }, { $inc: { weight: 1 }})
       await db.updateDomainNow()
       const thingUpdated = await Things.findOne({ _id: thing._id })
-      // console.log("thing, thingUpdated", thing, thingUpdated)
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + 1)
+    })
+
+    it('works for "deleteOne', async () => {
+      const weightWeAreLosing = parts[0].weight
+      const currentTotalWeight = sum(map(p => p.weight, parts))
+      await Parts.deleteOne({ _id: parts[0]._id })
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      expect(thingUpdated._D.totalWeight).toBe(currentTotalWeight - weightWeAreLosing)
     })
 
   })

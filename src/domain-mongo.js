@@ -36,7 +36,34 @@ const wrapCollectionObj = (original, collName, state) => {
       const fnName = prop
       wrapper[fnName] = function () {
         // debug('calling collection Fn', fnName)
+
+        switch (fnName) {
+          case 'deleteOne':
+            const filter = arguments[0]
+            return wrapper.findOne(filter).then(async doc => {
+              await findRootKeys(
+                state.domain,
+                state.db,
+                collName,
+                doc,
+                state.rootKeysToUpdate
+              )
+              enqueue(state)
+            })
+            .then(() => original.deleteOne.apply(this, arguments))
+            .then(res => {
+              dequeue(state)
+              return res
+            })
+            .catch(err => { dequeue(state); throw err })
+          default: // fall through
+        }
+
+        // if we didn't return above (we sometimes so), then we call
+        // the original function now
         const result = original[fnName].apply(this, arguments)
+
+        // and sometimes do some processing afterwards
         switch (fnName) {
           case 'insertOne':
             enqueue(state)
@@ -68,6 +95,7 @@ const wrapCollectionObj = (original, collName, state) => {
               throw err
             })
             break
+          case 'deleteOne':
           default:
           // do nothing
         }
