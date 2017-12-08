@@ -121,6 +121,13 @@ describe('domainMongo', () => {
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + 1)
     })
 
+    it ('works for "findOneAndReplace"', async () => {
+      await Parts.findOneAndReplace({ _id: parts[0]._id }, { weight: 0 })
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight - parts[0].weight)
+    })
+
     for (let fn of [ 'deleteOne', 'findOneAndDelete' ]) {
       it(`works for ${fn}`, async () => {
         const weightWeAreLosing = parts[0].weight
@@ -132,9 +139,11 @@ describe('domainMongo', () => {
       })
     }
 
-    it('rejects "findAndModify" as deprecated', () => {
-      expect(() => Parts.findAndModify()).toThrow()
-    })
+    for (let fn of [ 'findAndModify', 'findAndRemove', 'insert' ]) {
+      it(`rejects ${fn} as deprecated`, () => {
+        expect(() => Parts[fn]()).toThrow(/deprecated/)
+      })
+    }
 
     it('works for "deleteMany"', async () => {
       await Parts.deleteMany({
@@ -151,6 +160,17 @@ describe('domainMongo', () => {
       const findResult = await Things.find({ _id: thing._id }).toArray()
       expect(findResult.length).toBe(0)
     })
+
+    const notSupportedFns = [
+      'bulkWrite',
+      'initializeOrderedBulkOp',
+      'initializeUnorderedBulkOp'
+    ]
+    for (let fn of notSupportedFns) {
+      it(`fails on ${fn}, currently not supported`, async () => {
+        expect(() => Things[fn]()).toThrow()
+      })
+    }
 
   })
 })

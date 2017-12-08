@@ -87,8 +87,14 @@ const wrapCollectionObj = (original, collName, state) => {
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
           }
+          case 'findAndRemove':
           case 'findAndModify':
-            throw new Error(`${fnName} is deprecated, therefore not supported by u5-derive any more.`)
+          case 'insert':
+            throw new Error(`${fnName} is deprecated, therefore not supported by u5-derive.`)
+          case 'bulkWrite':
+          case 'initializeOrderedBulkOp':
+          case 'initializeUnorderedBulkOp':
+            throw new Error('"bulkWrite" not support (but could be added if required).')
           default: // fall through
         }
 
@@ -112,6 +118,7 @@ const wrapCollectionObj = (original, collName, state) => {
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
             break
+          case 'findOneAndReplace':
           case 'findOneAndUpdate':
             enqueue(state)
             result.then(async res => {
