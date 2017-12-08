@@ -1,4 +1,4 @@
-import { map, sum, times } from 'ramda'
+import { map, sum, times, prop } from 'ramda'
 import { mongoUrl } from './config'
 import domainMongo from '../domain-mongo'
 
@@ -29,6 +29,8 @@ const domain: Domain = {
   }
 }
 
+const randomWeight = () => Math.floor(Math.random() * 1000)
+
 describe('domainMongo', () => {
 
   it('updateDomainNow works in a simple case', async () => {
@@ -45,7 +47,7 @@ describe('domainMongo', () => {
     const part = {
       name: `This is a part of thing ${thing._id}`,
       thingId: thing._id,
-      weight: Math.floor(Math.random() * 1000)
+      weight: randomWeight()
     }
     await parts.insertOne(part)
 
@@ -103,7 +105,7 @@ describe('domainMongo', () => {
       parts = await Promise.all(times(
         () => Parts.insertOne({
           thingId: thing._id,
-          weight: Math.floor(Math.random() * 100)
+          weight: randomWeight()
         }),
         3
       ))
@@ -171,6 +173,20 @@ describe('domainMongo', () => {
         expect(() => Things[fn]()).toThrow()
       })
     }
+
+    it('works for "insertMany"', async () => {
+      const additionalParts = times(() => ({
+        thingId: thing._id,
+        weight: randomWeight()
+      }), 5)
+      const additionalWeight = sum(
+        map(prop('weight'))(additionalParts)
+      )
+      await Parts.insertMany(additionalParts)
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + additionalWeight)
+    })
 
   })
 })

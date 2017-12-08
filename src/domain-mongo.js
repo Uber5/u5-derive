@@ -118,6 +118,22 @@ const wrapCollectionObj = (original, collName, state) => {
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
             break
+          case 'insertMany':
+            enqueue(state)
+            result.then(async res => {
+              for (let doc of arguments[0]) {
+                debug(`insertMany, id inserted: ${doc._id}`)
+                await findRootKeys(
+                  state.domain,
+                  state.db,
+                  collName,
+                  doc,
+                  state.rootKeysToUpdate
+                )
+              }
+              dequeue(state)
+            }).catch(err => { dequeue(state); throw err })
+            break
           case 'findOneAndReplace':
           case 'findOneAndUpdate':
             enqueue(state)
