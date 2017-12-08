@@ -50,6 +50,19 @@ const wrapCollectionObj = (original, collName, state) => {
                 state.rootKeysToUpdate
               )
               dequeue(state)
+            }).catch(err => { dequeue(state); throw err })
+            break
+          case 'findOneAndUpdate':
+            enqueue(state)
+            result.then(async res => {
+              await findRootKeys(
+                state.domain,
+                state.db,
+                collName,
+                res.value,
+                state.rootKeysToUpdate
+              )
+              dequeue(state)
             }).catch(err => {
               dequeue(state)
               throw err

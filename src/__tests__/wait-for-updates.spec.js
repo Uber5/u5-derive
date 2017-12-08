@@ -118,7 +118,7 @@ describe('domainMongo', () => {
       await Parts.findOneAndUpdate({ _id: parts[0]._id }, { $inc: { weight: 1 }})
       await db.updateDomainNow()
       const thingUpdated = await Things.findOne({ _id: thing._id })
-      console.log("thing, thingUpdated", thing, thingUpdated)
+      // console.log("thing, thingUpdated", thing, thingUpdated)
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + 1)
     })
 
