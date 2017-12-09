@@ -204,5 +204,25 @@ describe('domainMongo', () => {
       expect(thingUpdated._D.totalWeight).toBe(0)
     })
 
+    it('works for "updateMany", when foreign keys change', async () => {
+      const otherThing = {
+        name: `Another thing (${new Date})`
+      }
+      await Things.insertOne(otherThing)
+      await Parts.updateMany(
+        {
+          _id: { $in: [ parts[0]._id, parts[1]._id ]}
+        },
+        {
+          $set: { thingId: otherThing._id }
+        }
+      )
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      const otherThingUpdated = await Things.findOne({ _id: otherThing._id })
+      expect(thingUpdated._D.totalWeight).toBe(parts[2].weight)
+      expect(otherThingUpdated._D.totalWeight).toBe(parts[0].weight + parts[1].weight)
+    })
+
   })
 })

@@ -190,13 +190,6 @@ const wrapCollectionObj = (original, collName, state) => {
               throw err
             })
             break
-          case 'updateMany':
-            // enqueue(state)
-            // return result.then(async res => {
-            //   docs = 
-            //   console.log('updateMany', res)
-            //   return res
-            // })
           case 'deleteOne':
           default:
           // do nothing
