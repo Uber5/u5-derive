@@ -40,6 +40,41 @@ const wrapCollectionObj = (original, collName, state) => {
         debug(`calling collection fn ${fnName} for collection ${collName}.`)
 
         switch (fnName) {
+          case 'updateMany':
+          {
+            const query = arguments[0]
+            enqueue(state)
+            return original.find(query).toArray()
+            .then(docs => Promise.all(docs.map(doc => findRootKeys(
+              state.domain,
+              state.db,
+              collName,
+              doc,
+              state.rootKeysToUpdate
+            ))))
+            .then(() => original.updateMany.apply(original, arguments))
+            .then(result => Promise.all([
+              result,
+              original.find(query).toArray()
+            ]))
+            .then(([ result, docs ]) => {
+              const docsPromises = docs.map(doc => findRootKeys(
+                state.domain,
+                state.db,
+                collName,
+                doc,
+                state.rootKeysToUpdate
+              ))
+              return Promise.all([
+                result,
+                ...docsPromises
+              ])
+            }).then(([ result, ...ignore ]) => {
+              dequeue(state)
+              return result
+            })
+            break
+          }
           case 'findOneAndDelete':
           case 'deleteOne':
           {
@@ -90,11 +125,15 @@ const wrapCollectionObj = (original, collName, state) => {
           case 'findAndRemove':
           case 'findAndModify':
           case 'insert':
+          case 'remove':
+          case 'save':
+          case 'update':
             throw new Error(`${fnName} is deprecated, therefore not supported by u5-derive.`)
           case 'bulkWrite':
           case 'initializeOrderedBulkOp':
           case 'initializeUnorderedBulkOp':
-            throw new Error('"bulkWrite" not support (but could be added if required).')
+          case 'replaceOne': // TODO: use findOneAndReplace instead?
+            throw new Error(`${fnName} is not supported (but could be added if required).`)
           default: // fall through
         }
 
@@ -151,6 +190,13 @@ const wrapCollectionObj = (original, collName, state) => {
               throw err
             })
             break
+          case 'updateMany':
+            // enqueue(state)
+            // return result.then(async res => {
+            //   docs = 
+            //   console.log('updateMany', res)
+            //   return res
+            // })
           case 'deleteOne':
           default:
           // do nothing

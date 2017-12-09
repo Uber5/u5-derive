@@ -141,7 +141,10 @@ describe('domainMongo', () => {
       })
     }
 
-    for (let fn of [ 'findAndModify', 'findAndRemove', 'insert' ]) {
+    const deprecatedFns = [
+      'findAndModify', 'findAndRemove', 'insert', 'remove', 'save', 'update'
+    ]
+    for (let fn of deprecatedFns) {
       it(`rejects ${fn} as deprecated`, () => {
         expect(() => Parts[fn]()).toThrow(/deprecated/)
       })
@@ -166,11 +169,12 @@ describe('domainMongo', () => {
     const notSupportedFns = [
       'bulkWrite',
       'initializeOrderedBulkOp',
-      'initializeUnorderedBulkOp'
+      'initializeUnorderedBulkOp',
+      'replaceOne'
     ]
     for (let fn of notSupportedFns) {
       it(`fails on ${fn}, currently not supported`, async () => {
-        expect(() => Things[fn]()).toThrow()
+        expect(() => Things[fn]()).toThrow(/not supported/)
       })
     }
 
@@ -186,6 +190,18 @@ describe('domainMongo', () => {
       await db.updateDomainNow()
       const thingUpdated = await Things.findOne({ _id: thing._id })
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + additionalWeight)
+    })
+
+    it('works for "updateMany"', async () => {
+      const partIds = map(prop('_id'), parts)
+      await Parts.updateMany({
+        _id: { $in: partIds }
+      }, {
+        $set: { weight: 0 }
+      })
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      expect(thingUpdated._D.totalWeight).toBe(0)
     })
 
   })
