@@ -122,6 +122,39 @@ const wrapCollectionObj = (original, collName, state) => {
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
           }
+          case 'findOneAndReplace':
+          case 'findOneAndUpdate':
+          {
+            enqueue(state)
+            const filter = arguments[0]
+            return original.findOne(filter)
+            .then(async doc => await findRootKeys(
+              state.domain,
+              state.db,
+              collName,
+              doc,
+              state.rootKeysToUpdate
+            ))
+            .then(async () => await original[fnName].apply(original, arguments))
+            .then(result => Promise.all([
+              result,
+              original.findOne(filter)
+            ]))
+            .then(async ([ result, doc ]) => {
+              await findRootKeys(
+                state.domain,
+                state.db,
+                collName,
+                doc,
+                state.rootKeysToUpdate
+              )
+              dequeue(state)
+              return result
+            }).catch(err => {
+              dequeue(state)
+              throw err
+            })
+          }
           case 'findAndRemove':
           case 'findAndModify':
           case 'insert':
@@ -172,23 +205,6 @@ const wrapCollectionObj = (original, collName, state) => {
               }
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
-            break
-          case 'findOneAndReplace':
-          case 'findOneAndUpdate':
-            enqueue(state)
-            result.then(async res => {
-              await findRootKeys(
-                state.domain,
-                state.db,
-                collName,
-                res.value,
-                state.rootKeysToUpdate
-              )
-              dequeue(state)
-            }).catch(err => {
-              dequeue(state)
-              throw err
-            })
             break
           case 'deleteOne':
           default:

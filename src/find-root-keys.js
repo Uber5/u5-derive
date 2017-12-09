@@ -42,8 +42,13 @@ const findRootKeys = async (
         if (assoc.of === type) {
           debug(`findRootKeys, type=${type}, otherName=${otherName}, foreignKey=${assoc.foreignKey}`)
           if (otherName === domain.root) {
-            debug('Adding rootKey', instance, instance[assoc.foreignKey])
-            rootKeys.add(instance[assoc.foreignKey])
+            const key = instance[assoc.foreignKey]
+            if (key) {
+              debug('Adding rootKey', instance, key)
+              rootKeys.add(key)
+            } else {
+              debug('*Not* adding rootKey, as falsy', instance, assoc.foreignKey)
+            }
           } else {
             const otherInstance = await db.collection(otherName).findOne({ _id: instance[assoc.foreignKey] })
             debug('findRootKeys (recurse)', otherName, assoc.foreignKey, instance, otherInstance)

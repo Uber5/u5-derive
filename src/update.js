@@ -15,6 +15,10 @@ const updateCache = (cache, domain, key, counter) => {
 
   debug(`updateCache, domain ${ domain.root }, key=${ key }, counter=${ counter }`)
 
+  if (!key) {
+    return Promise.resolve()
+  }
+  
   const findAndTraverse = (self, type, typeDef, relName /* other */, rel /* otherDef */, many = true) => {
 
     const other = rel.of || relName
@@ -51,10 +55,15 @@ const updateCache = (cache, domain, key, counter) => {
 
   function traverseToLoad(type, key) {
     const loader = cache.getLoader(type)
+    invariant(key, `Missing key when querying cache, type=${type}`)
     return loader.load(key)
     .then(self => {
       const typeDef = domain.types[type]
       const { hasMany, hasOne } = typeDef
+
+      if (!self) {
+        throw new Error(`Instance not found, type=${type}, key=${key}`)
+      }
 
       if (self.__version >= counter) {
         // concurrent load may result in newer version, should be idempotent

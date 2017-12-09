@@ -123,6 +123,33 @@ describe('domainMongo', () => {
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + 1)
     })
 
+    it ('works for "findOneAndUpdate" when foreign key changes', async () => {
+
+      // create another thing
+      const otherThing = {
+        name: `Another thing, ${new Date}`
+      }
+      await Things.insertOne(otherThing)
+
+      // .. and give the first part the foreign key of the other thing
+      await Parts.findOneAndUpdate(
+        { _id: parts[0]._id },
+        { $set: { thingId: otherThing._id }}
+      )
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: thing._id })
+      const otherThingUpdated = await Things.findOne({ _id: otherThing._id })
+
+      // as a result, the totalWeight of the "old thing" should be 
+      // the sum of the second and third part
+      expect(thingUpdated._D.totalWeight).toBe(parts[1].weight + parts[2].weight)
+
+      // ... and the totalWeight of the "other thing" should be the
+      // weight of the first part
+      expect(otherThingUpdated._D.totalWeight).toBe(parts[0].weight)
+
+    })
+
     it ('works for "findOneAndReplace"', async () => {
       await Parts.findOneAndReplace({ _id: parts[0]._id }, { weight: 0 })
       await db.updateDomainNow()
