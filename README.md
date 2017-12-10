@@ -16,12 +16,12 @@ In other words:
 
 Erm, don't use, not ready.
 
-# Run example
+# Run a REPL
 
-For now:
+This is experimental, it runs a REPL for one of the samples:
 
 ```
-./node_modules/.bin/supervisor -w src -- -r 'babel-register' src ./sample-domains/things.js
+./node_modules/.bin/babel-node ./samples/simple/index.js
 ```
 
 
