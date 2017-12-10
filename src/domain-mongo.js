@@ -166,6 +166,7 @@ const wrapCollectionObj = (original, collName, state) => {
           case 'initializeOrderedBulkOp':
           case 'initializeUnorderedBulkOp':
           case 'replaceOne': // TODO: use findOneAndReplace instead?
+          case 'updateOne': // TODO: use findOneAndUpdate instead?
             throw new Error(`${fnName} is not supported (but could be added if required).`)
           default: // fall through
         }

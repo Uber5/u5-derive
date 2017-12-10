@@ -197,7 +197,8 @@ describe('domainMongo', () => {
       'bulkWrite',
       'initializeOrderedBulkOp',
       'initializeUnorderedBulkOp',
-      'replaceOne'
+      'replaceOne',
+      'updateOne'
     ]
     for (let fn of notSupportedFns) {
       it(`fails on ${fn}, currently not supported`, async () => {
