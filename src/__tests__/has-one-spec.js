@@ -1,5 +1,6 @@
 import { Cache, update as _update, tailAndInvalidate } from '..'
-import { simplifiedInsert, mongo, findById } from './simple-domain-spec'
+import { mongo } from './config'
+import { simplifiedInsert, findById } from './simple-domain-spec'
 import domain from '../../samples/has-one/domain'
 
 describe('simple domain', () => {

@@ -1,12 +1,6 @@
 import { Cache, update as _update, resync, tailAndInvalidate } from '..'
 import domain from '../../samples/simple/domain'
-
-import { MongoClient } from 'mongodb'
-
-const mongoUrl = process.env.MONGO_URL_TEST || `mongodb://localhost/u5-derive-test`
-
-// TODO: exports should be in ./test-setup.js or similar
-export const mongo = MongoClient.connect(mongoUrl)
+import { mongo } from './config'
 
 export const simplifiedInsert = (collection, doc) => mongo
   .then(db => db.collection(collection))

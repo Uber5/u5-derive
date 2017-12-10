@@ -1,6 +1,6 @@
 import { Cache, update as _update, tailAndInvalidate } from '..'
 import domain from '../../samples/separate-types/domain'
-import { mongo } from './simple-domain-spec'
+import { mongo } from './config'
 
 describe('separate types', () => {
 

@@ -1,12 +1,7 @@
+import * as R from 'ramda'
 import { Cache, update as _update, resync, tailAndInvalidate } from '..'
 import domain from '../../samples/clubs/clubs-domain'
-
-import { MongoClient } from 'mongodb'
-import * as R from 'ramda'
-
-const mongoUrl = process.env.MONGO_URL_TEST || `mongodb://localhost/u5-derive-test`
-
-const mongo = MongoClient.connect(mongoUrl)
+import { mongo } from './config'
 
 const simplifiedInsert = (collection, doc) => mongo
   .then(db => db.collection(collection))

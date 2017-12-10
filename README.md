@@ -39,8 +39,7 @@ merge master and build docs etc.)
 * Make *sure* you do the configuration to your MongoDB instance below.
 * Note that by default `mongodb://localhost/u5-derive-test` will be used when
   running the test, as per
-  [simple-domain-spec.js](./src/__tests__/simple-domain-spec.js) (this is not
-  a clean setup...).
+  [__tests__/config.js](./src/__tests__/config.js).
 * Once done:
 
 ```bash
