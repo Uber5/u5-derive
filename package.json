@@ -1,6 +1,6 @@
 {
   "name": "u5-derive",
-  "version": "0.1.9",
+  "version": "0.2.0-alpha1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
