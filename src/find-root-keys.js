@@ -1,6 +1,6 @@
 // @flow
 import { Db } from 'mongodb'
-import { isEmpty } from 'ramda'
+import { isEmpty, path } from 'ramda'
 import { DomainType } from './domain'
 
 const debug = require('debug')('u5-derive:find-root-keys')
@@ -19,6 +19,8 @@ const getReferringTypes = (domain: Domain, typeName: string) => {
     return hasAnyOfType(typeDef, typeName)
   })
 }
+
+const instanceProp = (key, instance) => path(key.split('.'), instance)
 
 const findRootKeys = async (
   domain: Domain,
@@ -41,8 +43,9 @@ const findRootKeys = async (
       for (let [ assocName, assoc ] of assocEntries) {
         if (assoc.of === type) {
           debug(`findRootKeys, type=${type}, otherName=${otherName}, foreignKey=${assoc.foreignKey}`)
+          const key = instanceProp(assoc.foreignKey, instance)
           if (otherName === domain.root) {
-            const key = instance[assoc.foreignKey]
+            // const key = instance[assoc.foreignKey]
             if (key) {
               debug('Adding rootKey', instance, key)
               rootKeys.add(key)
@@ -50,7 +53,7 @@ const findRootKeys = async (
               debug('*Not* adding rootKey, as falsy', instance, assoc.foreignKey)
             }
           } else {
-            const otherInstance = await db.collection(otherName).findOne({ _id: instance[assoc.foreignKey] })
+            const otherInstance = await db.collection(otherName).findOne({ _id: key })
             debug('findRootKeys (recurse)', otherName, assoc.foreignKey, instance, otherInstance)
             await findRootKeys(domain, db, otherName, otherInstance, rootKeys)
           }
