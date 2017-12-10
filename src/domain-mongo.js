@@ -179,7 +179,7 @@ const wrapCollectionObj = (original, collName, state) => {
         switch (fnName) {
           case 'insertOne':
             enqueue(state)
-            result.then(async res => {
+            return result.then(async res => {
               debug(`insertOne done, insertedId:`, res.insertedId)
               await findRootKeys(
                 state.domain,
@@ -190,10 +190,9 @@ const wrapCollectionObj = (original, collName, state) => {
               )
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
-            break
           case 'insertMany':
             enqueue(state)
-            result.then(async res => {
+            return result.then(async res => {
               for (let doc of arguments[0]) {
                 debug(`insertMany, id inserted: ${doc._id}`)
                 await findRootKeys(
@@ -206,7 +205,6 @@ const wrapCollectionObj = (original, collName, state) => {
               }
               dequeue(state)
             }).catch(err => { dequeue(state); throw err })
-            break
           case 'deleteOne':
           default:
           // do nothing

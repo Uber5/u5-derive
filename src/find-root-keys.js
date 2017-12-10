@@ -44,6 +44,7 @@ const findRootKeys = async (
         if (assoc.of === type) {
           debug(`findRootKeys, type=${type}, otherName=${otherName}, foreignKey=${assoc.foreignKey}`)
           const key = instanceProp(assoc.foreignKey, instance)
+          debug(`findRootKeys, key=${key}, otherName=${otherName}, domain.root=${domain.root}`)
           if (otherName === domain.root) {
             // const key = instance[assoc.foreignKey]
             if (key) {
