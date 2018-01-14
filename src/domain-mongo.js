@@ -3,7 +3,7 @@ import { MongoClient, Db } from 'mongodb'
 
 import findRootKeys from './find-root-keys'
 import { Domain } from './domain'
-import { update as _update } from './update'
+import { update as _update, resync } from './update'
 import Cache from './cache'
 
 const debug = require('debug')('u5-derive:domain-mongo')
@@ -232,8 +232,6 @@ const domainMongo = async (
   { domain, mongoUrl }: { domain: Domain, mongoUrl: string }
 ): Db => {
   const wrappedDb = await MongoClient.connect(mongoUrl)
-
-  // TODO: Cache should have resolved promise of connect() as constructor arg?
   const cache = new Cache(MongoClient.connect(mongoUrl))
 
   const state = {
@@ -283,6 +281,9 @@ const domainMongo = async (
       )
     )
   }
+
+  const _resync = () => resync(cache, domain)
+  wrapper.resync = _resync
 
   return wrapper
 }
