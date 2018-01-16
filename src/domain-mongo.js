@@ -189,6 +189,7 @@ const wrapCollectionObj = (original, collName, state) => {
                 state.rootKeysToUpdate
               )
               dequeue(state)
+              return res
             }).catch(err => { dequeue(state); throw err })
           case 'insertMany':
             enqueue(state)
@@ -204,6 +205,7 @@ const wrapCollectionObj = (original, collName, state) => {
                 )
               }
               dequeue(state)
+              return res
             }).catch(err => { dequeue(state); throw err })
           case 'deleteOne':
           default:
