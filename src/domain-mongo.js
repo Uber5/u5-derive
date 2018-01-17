@@ -267,6 +267,7 @@ const domainMongo = async (
   const update = key => _update(cache, domain, key)
 
   wrapper.updateDomainNow = async () => {
+    cache.clear()
     const promise = state.resolvedWhenDoneWaiting
     if (state.numWaiting === 0) {
       initResolverWhenDoneWaiting(state)

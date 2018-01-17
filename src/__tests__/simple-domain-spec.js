@@ -50,7 +50,7 @@ describe('simple domain', () => {
     const tailDatabaseName = process.env.MONGO_TAIL_DATABASE_NAME_TEST || 'u5-derive-test'
     tailAndInvalidate(tailUrl, tailDatabaseName, cache)
 
-    update = key => _update(cache, domain, key)
+    update = key => _update(new Cache(mongo), domain, key)
 
   }))
 

@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb'
 import { transact, derivation } from 'derivable'
 import * as R from 'ramda'
 import invariant from 'invariant'
+import SeenKeysByType from './seen-keys-by-type'
 
 const debug = require('debug')('u5-derive')
 
@@ -15,10 +16,8 @@ const updateCache = (cache, domain, key, counter) => {
 
   debug(`updateCache, domain ${ domain.root }, key=${ key }, counter=${ counter }`)
 
-  if (!key) {
-    return Promise.resolve()
-  }
-  
+  const seenKeysByType = new SeenKeysByType()
+
   const findAndTraverse = (self, type, typeDef, relName /* other */, rel /* otherDef */, many = true) => {
 
     const other = rel.of || relName
@@ -28,21 +27,38 @@ const updateCache = (cache, domain, key, counter) => {
 
     const loader = cache.getLoader(other)
 
+    if (!many && !rel.targetTypeHasForeignKey) {
+      if (!self[rel.foreignKey]) { // we have no value
+        debug('"self" has no foreign key', rel.foreignKey, self)
+        self[relName] = derivation(() => null)
+        return Promise.resolve([])
+      }
+    }
+
     const query = many || rel.targetTypeHasForeignKey
       ? {
-          [rel.foreignKey]: ObjectId(self._id)
+          [rel.foreignKey]: self._id
         }
       : {
-          _id: ObjectId(self[rel.foreignKey])
+          _id: self[rel.foreignKey]
         }
 
     return cache.mongo.then(db => db.collection(other).find(query).toArray())
     .then(otherInstances => {
 
-      // console.log('findAndTraverse, otherInstances', otherInstances.map(i => i._id))
-
-      otherInstances.forEach(i => loader.clear(i._id).prime(i._id, i))
-      debug('findAndTraverse, about to assign', relName, self._id, otherInstances.length)
+      otherInstances.forEach(i => {
+        loader.prime(i._id, i)
+        debug('primed loader', other, i._id, i)
+      })
+      return Promise.all(otherInstances.map(i => loader.load(i._id)))
+    }).then(otherInstances => { 
+      debug(
+        'findAndTraverse, about to assign',
+        relName, 'of type', type, 'with id', self._id,
+        otherInstances.length,
+        otherInstances.map(i => i._id),
+        otherInstances
+      )
       self[relName] = many
         ? derivation(() => otherInstances)
         : derivation(() => otherInstances.length > 0 ? otherInstances[0] : null)
@@ -50,28 +66,36 @@ const updateCache = (cache, domain, key, counter) => {
     })
     .then(otherInstances => Promise.all(
       otherInstances.map(i => traverseToLoad(other, i._id))
-    ))
+    )).then(() => undefined)
   }
 
   function traverseToLoad(type, key) {
-    const loader = cache.getLoader(type)
     invariant(key, `Missing key when querying cache, type=${type}`)
+    const loader = cache.getLoader(type)
     return loader.load(key)
     .then(self => {
+      invariant(self, `Instance not found, type=${type}, key=${key}`)
       const typeDef = domain.types[type]
       const { hasMany, hasOne } = typeDef
 
-      if (!self) {
-        throw new Error(`Instance not found, type=${type}, key=${key}`)
-      }
+      debug('traverseToLoad, loaded', type, key)
 
       if (self.__version >= counter) {
         // concurrent load may result in newer version, should be idempotent
         // nevertheless
-        console.log('Breaking recursion', type, key)
-        return Promise.resolve()
+        debug('Breaking recursion', type, key)
+        return Promise.resolve() // [] instead?
       }
       self.__version = counter
+
+      // check if we have this already
+      if (seenKeysByType.seen(type, key)) {
+        debug('traverseToLoad, not loading again', type, key)
+        return Promise.resolve([])
+      } else {
+        debug('traverseToLoad, not seen', type, key)
+        seenKeysByType.add(type, key)
+      }
 
       const hasManyPromises = Object.keys(hasMany || {})
       .map(relName => findAndTraverse(
@@ -92,15 +116,17 @@ const updateCache = (cache, domain, key, counter) => {
   return traverseToLoad(domain.root, key)
 }
 
-const derive = (cache, domain, key) => {
+const doTraverse = (domain, type, o, cb) => {
+  const seen = new Set()
+  return traverse(type, o, cb)
 
   function traverse(type, o, cb) {
 
     const traverseAssociation = (self, type, typeDef, relName, rel, many = true) => {
 
-      ok(self[relName], `Missing '${ relName } from instance of '${ type }'`)
+      ok(self[relName], `Missing '${ relName }' from instance of '${ type }'`)
 
-      const other = rel.of || relName
+      const other = rel.of || relName // TODO: we don't really support leaving out 'of' for now
       const others = self[relName].get()
 
       if (many) {
@@ -112,14 +138,19 @@ const derive = (cache, domain, key) => {
       }
     }
 
-    // console.log('traverse (cb)', type, o)
+    if (seen.has(type + o._id.toString())) {
+      debug('aborting traversal, seen', type, o._id)
+      return
+    }
+    seen.add(type + o._id.toString())
+
+    debug('traverse (cb)', type, o)
     if (!cb(type, o)) {
       debug('aborting traversal, callback returned false')
     }
 
     const typeDef = domain.types[type]
     const { hasMany, hasOne } = typeDef
-    // console.log('derive.traverse, o', o)
     Object.keys(hasMany || {})
     .map(relName => traverseAssociation(
       o, type, typeDef, relName, hasMany[relName]
@@ -130,14 +161,19 @@ const derive = (cache, domain, key) => {
       o, type, typeDef, relName, hasOne[relName], false
     ))
   }
+}
+
+const derive = (cache, domain, key) => {
+
+  debug('derive, root and key', domain.root, key)
 
   const loader = cache.getLoader(domain.root)
   return loader.load(key)
   .then(self => {
     transact(() => {
-      traverse(domain.root, self, (typeName, o) => {
+      doTraverse(domain, domain.root, self, (typeName, o) => {
         const type = domain.types[typeName]
-        // console.log('DERIVE?', type, o._id)
+        // debug('DERIVE?', type, o._id)
         Object.keys(type.derivedProps || []).map(propName => {
           const prop = type.derivedProps[propName]
           o[propName] = derivation(() => prop.f(o))
@@ -148,18 +184,18 @@ const derive = (cache, domain, key) => {
 
     // store / update derived props
     const updates = []
-    traverse(domain.root, self, (typeName, o) => {
+    doTraverse(domain, domain.root, self, (typeName, o) => {
       const type = domain.types[typeName]
       const derivedProps = {}
       Object.keys(type.derivedProps || []).map(propName => {
-        // console.log(`o=${ o._id }, ${ propName }=${ o[propName].get() }`)
+        // debug(`o=${ o._id }, ${ propName }=${ o[propName].get() }`)
         derivedProps[propName] = o[propName].get()
       })
-      // console.log(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
+      // debug(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
       if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
-        debug(`must update ${ typeName } ${ o._id }`)
+        debug(`must update ${ typeName } ${ o._id }`, derivedProps)
         updates.push(cache.mongo.then(db => db.collection(typeName).findOneAndUpdate({
-          _id: ObjectId(o._id)
+          _id: (o._id)
         }, {
           $set: { [derivedPropsKey]: derivedProps }
         })))
@@ -177,7 +213,14 @@ export const update = (cache, domain, key) => updateCache(cache, domain, key, ++
 
 export const resync = (cache, domain) => cache.mongo
 .then(db => db.collection(domain.root))
-.then(coll => coll.find({}, { _id: 1 }).toArray())
+.then(coll => {
+  debug('resync, about to find _ids of root', domain.root)
+  return coll.find({}, { _id: 1 }).toArray()
+})
+.then(docs => {
+  debug('resync, docs found', docs)
+  return docs
+})
 .then(docs => docs
   .map(doc => doc._id)
   .map(id => updateCache(cache, domain, id, ++counter)
