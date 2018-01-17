@@ -22,7 +22,7 @@ describe('separate types', () => {
   
   const setupData = async () => {
     const db = await mongo
-    await thingsCollection.remove({})
+    // await thingsCollection.remove({})
     await thingsCollection.insert({ bla: 42 })
   }
 
