@@ -1,5 +1,5 @@
 import { Cache, update as _update, tailAndInvalidate } from '..'
-import { mongo } from './config'
+import { mongo as client } from './config'
 import { simplifiedInsert, findById } from './simple-domain-spec'
 import domain from '../../samples/has-one/domain'
 
@@ -7,9 +7,9 @@ describe('simple domain', () => {
 
   let cache, update
 
-  beforeEach(() => mongo.then(db => {
+  beforeEach(() => client.then(client => client.db()).then(db => {
 
-    cache = new Cache(mongo)
+    cache = new Cache(db)
 
     const tailUrl = process.env.MONGO_TAIL_URL || 'mongodb://localhost/local'
     const tailDatabaseName = process.env.MONGO_TAIL_DATABASE_NAME_TEST || 'u5-derive-test'

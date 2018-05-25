@@ -43,7 +43,7 @@ const updateCache = (cache, domain, key, counter) => {
           _id: self[rel.foreignKey]
         }
 
-    return cache.mongo.then(db => db.collection(other).find(query).toArray())
+    return Promise.resolve(cache.db.collection(other).find(query).toArray())
     .then(otherInstances => {
 
       otherInstances.forEach(i => {
@@ -194,11 +194,11 @@ const derive = (cache, domain, key) => {
       // debug(`derivedProps(old)=`, o[derivedPropsKey], derivedProps)
       if (!o[derivedPropsKey] || !R.equals(o[derivedPropsKey], derivedProps)) {
         debug(`must update ${ typeName } ${ o._id }`, derivedProps)
-        updates.push(cache.mongo.then(db => db.collection(typeName).findOneAndUpdate({
+        updates.push(cache.db.collection(typeName).findOneAndUpdate({
           _id: (o._id)
         }, {
           $set: { [derivedPropsKey]: derivedProps }
-        })))
+        }))
       }
       return true
     })

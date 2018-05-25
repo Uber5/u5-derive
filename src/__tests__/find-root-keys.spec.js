@@ -44,7 +44,7 @@ describe('find root keys, given a document (type and instance) that supposedly w
       }
     }
     it('determines the root key(s)', async () => {
-      const db = await mongo
+      const db = (await mongo).db()
       const [ roots, level1s, level2s ] = [ 'roots', 'level1s', 'level2s' ].map(
         name => db.collection(name)
       )

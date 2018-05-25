@@ -233,8 +233,9 @@ const wrapCollectionFn = (db, state) => function () {
 const domainMongo = async (
   { domain, mongoUrl }: { domain: Domain, mongoUrl: string }
 ): Db => {
-  const wrappedDb = await MongoClient.connect(mongoUrl)
-  const cache = new Cache(MongoClient.connect(mongoUrl))
+  const mongoClient = await MongoClient.connect(mongoUrl)
+  const wrappedDb = mongoClient.db(/*mongoClient.s.options.dbName*/)
+  const cache = new Cache(wrappedDb)
 
   const state = {
     collectionWrappers: {}, // maps collection name to collection wrapper

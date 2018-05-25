@@ -1,11 +1,10 @@
 import * as R from 'ramda'
 import { Cache, update as _update, resync, tailAndInvalidate } from '..'
 import domain from '../../samples/clubs/clubs-domain'
-import { mongo } from './config'
+import { mongo as client } from './config'
 
-const simplifiedInsert = (collection, doc) => mongo
-  .then(db => db.collection(collection))
-  .then(coll => coll.insert(doc))
+const simplifiedInsert = (collection, doc) => client
+  .then(client => client.db().collection(collection).insert(doc))
   .then(r => r.ops[0])
 
 const setupClubAndMembers = update => simplifiedInsert('clubs', {})
@@ -16,8 +15,8 @@ const setupClubAndMembers = update => simplifiedInsert('clubs', {})
   ]))
   .then(([ clubId ]) => Promise.all([ clubId, update(clubId) ]))
   .then(([ clubId ]) => Promise.all([
-    mongo.then(db => db.collection('clubs').findOne({ _id: clubId })),
-    mongo.then(db => db.collection('members').find({
+    client.then(client => client.db().collection('clubs').findOne({ _id: clubId })),
+    client.then(client => client.db().collection('members').find({
       $or: [
         { clubIdOrdinaryMember: clubId },
         { clubIdVipMember: clubId }
@@ -29,9 +28,9 @@ describe('multiple associations between two types', () => {
 
   let update
 
-  beforeEach(() => mongo.then(db => {
+  beforeEach(() => client.then(client => client.db()).then(db => {
 
-    const cache = new Cache(mongo)
+    const cache = new Cache(db)
 
     // setup mongodb tailing
     const tailUrl = process.env.MONGO_TAIL_URL || 'mongodb://localhost/local'

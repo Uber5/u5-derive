@@ -3,8 +3,7 @@ import { ObjectId } from 'mongodb'
 
 const debug = require('debug')('u5-derive:cache')
 
-const load = (mongo, type) => keys => mongo
-.then(db => db.collection(type))
+const load = (db, type) => keys => Promise.resolve(db.collection(type))
 .then(coll => Promise.all(
   keys.map(key => coll.findOne({ _id: (key) }))
 ))
@@ -18,9 +17,9 @@ const load = (mongo, type) => keys => mongo
 })
 
 class Cache {
-  constructor(mongo) {
+  constructor(db) {
     this.loaders = {}
-    this.mongo = mongo
+    this.db = db
   }
   hasLoader(type) {
     return this.loaders[type] != null
@@ -29,7 +28,7 @@ class Cache {
     if (!this.loaders[type]) {
       debug('new Dataloader for type', type)
       this.loaders[type] = new DataLoader(
-        load(this.mongo, type),
+        load(this.db, type),
         {
           cacheKeyFn: key => {
             debug('cacheKeyFn, key', type, key)

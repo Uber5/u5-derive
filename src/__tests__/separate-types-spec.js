@@ -6,9 +6,9 @@ describe('separate types', () => {
 
   let update, thingsCollection
   
-  beforeEach(() => mongo.then(db => {
+  beforeEach(() => mongo.then(client => client.db()).then(db => {
 
-    const cache = new Cache(mongo)
+    const cache = new Cache(db)
 
     // setup mongodb tailing
     const tailUrl = process.env.MONGO_TAIL_URL || 'mongodb://localhost/local'
