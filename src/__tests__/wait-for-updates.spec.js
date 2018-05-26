@@ -21,6 +21,9 @@ const domain: Domain = {
       derivedProps: {
         totalWeight: {
           f: self => self.parts.get().map(part => part.weight).reduce((sum, v) => sum + v, 0)
+        },
+        totalWeightScaled: {
+          f: self => (self.scale || 1) * self.totalWeight.get()
         }
       }
     },
@@ -218,6 +221,17 @@ describe('domainMongo', () => {
       await db.updateDomainNow()
       const thingUpdated = await Things.findOne({ _id: thing._id })
       expect(thingUpdated._D.totalWeight).toBe(thing._D.totalWeight + additionalWeight)
+    })
+
+    it('works for "insertMany" when domain root (only) is updated', async () => {
+      const { insertedIds } = await Things.insertMany([
+        {
+          desc: `insertMany test, ${ new Date() }`
+        }
+      ])
+      await db.updateDomainNow()
+      const thingUpdated = await Things.findOne({ _id: insertedIds[0] })
+      expect(thingUpdated._D.totalWeightScaled).toBe(0)
     })
 
     it('works for "updateMany"', async () => {

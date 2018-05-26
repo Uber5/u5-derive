@@ -32,6 +32,10 @@ const findRootKeys = async (
 
   // TODO: we have to check if this type/instance._id has been visited already
 
+  if (type === domain.root) {
+    debug('Adding rootKey (1)', type, instance._id)
+    rootKeys.add(instance._id)
+  }
   const assocTypes = [ 'hasOne', 'hasMany' ]
   const referringTypes = getReferringTypes(domain, type)
   debug('referringTypes', referringTypes, 'type', type)
