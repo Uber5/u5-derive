@@ -12,6 +12,6 @@ export type Types = {
 
 export type Domain = {
   root: string,
-  types: Types
+  types: Types,
+  derivedPropsKey?: string
 }
-

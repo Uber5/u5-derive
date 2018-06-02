@@ -7,12 +7,14 @@ import SeenKeysByType from './seen-keys-by-type'
 
 const debug = require('debug')('u5-derive')
 
-const derivedPropsKey = process.env.DERIVED_PROPS_KEY || '_D'
+const derivedPropsKeyFromDomain = domain => domain.derivedPropsKey ||  process.env.DERIVED_PROPS_KEY || '_D'
 
 const updateCache = (cache, domain, key, counter) => {
 
   invariant(domain.root, 'Domain needs a "root" property')
   invariant(domain.types && Object.keys(domain.types).length > 0, 'Domain needs "types" property with at least one type')
+
+  const derivedPropsKey = derivedPropsKeyFromDomain(domain)
 
   debug(`updateCache, domain ${ domain.root }, key=${ key }, counter=${ counter }`)
 
@@ -76,6 +78,7 @@ const updateCache = (cache, domain, key, counter) => {
     .then(self => {
       invariant(self, `Instance not found, type=${type}, key=${key}`)
       const typeDef = domain.types[type]
+      invariant(typeDef, `Type not found in domain: ${type}`)
       const { hasMany, hasOne } = typeDef
 
       debug('traverseToLoad, loaded', type, key)
@@ -167,6 +170,7 @@ const derive = (cache, domain, key) => {
 
   debug('derive, root and key', domain.root, key)
 
+  const derivedPropsKey = derivedPropsKeyFromDomain(domain)
   const loader = cache.getLoader(domain.root)
   return loader.load(key)
   .then(self => {

@@ -1,8 +1,9 @@
 //@flow
 import { MongoClient, Db } from 'mongodb'
+import invariant from 'invariant'
 
 import findRootKeys from './find-root-keys'
-import { Domain } from './domain'
+import type { Domain } from './domain'
 import { update as _update, resync } from './update'
 import Cache from './cache'
 
@@ -73,7 +74,7 @@ const wrapCollectionObj = (original, collName, state) => {
               dequeue(state)
               return result
             })
-            break
+            // break ... is unreachable
           }
           case 'findOneAndDelete':
           case 'deleteOne':
@@ -233,6 +234,8 @@ const wrapCollectionFn = (db, state) => function () {
 const domainMongo = async (
   { domain, mongoUrl }: { domain: Domain, mongoUrl: string }
 ): Db => {
+  invariant(domain, 'argument is missing "domain" property.')
+  invariant(mongoUrl, 'argument is missing "mongoUrl" property.')
   const mongoClient = await MongoClient.connect(mongoUrl)
   const wrappedDb = mongoClient.db(/*mongoClient.s.options.dbName*/)
   const cache = new Cache(wrappedDb)

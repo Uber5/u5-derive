@@ -39,11 +39,12 @@ type Type = {
  * 
  */
 
-export default (root: string, types: Array<Type>) => {
+export default (root: string, types: Array<Type>, derivedPropsKey: string) => {
   invariant(root, '"root" must be provided')
   invariant(types instanceof Array, '"types" must be an array of types')
   return {
     root,
-    types: typeObjectFromArray(types)
+    types: typeObjectFromArray(types),
+    derivedPropsKey
   }
 }
