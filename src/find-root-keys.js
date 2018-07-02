@@ -34,7 +34,7 @@ const findRootKeys = async (
 
   if (type === domain.root) {
     debug('Adding rootKey (1)', type, instance._id)
-    rootKeys.add(instance._id)
+    rootKeys.add(instance._id.toString())
   }
   const assocTypes = [ 'hasOne', 'hasMany' ]
   const referringTypes = getReferringTypes(domain, type)
@@ -53,7 +53,7 @@ const findRootKeys = async (
             // const key = instance[assoc.foreignKey]
             if (key) {
               debug('Adding rootKey', instance, key)
-              rootKeys.add(key)
+              rootKeys.add(key.toString())
             } else {
               debug('*Not* adding rootKey, as falsy', instance, assoc.foreignKey)
             }

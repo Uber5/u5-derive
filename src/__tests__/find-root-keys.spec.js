@@ -61,7 +61,7 @@ describe('find root keys, given a document (type and instance) that supposedly w
         'level2s',
         level2
       )
-      expect(Array.from(keys.keys())).toEqual([ root._id ])
+      expect(Array.from(keys.keys())).toEqual([ root._id.toString() ])
     })
   })
 

@@ -1,5 +1,5 @@
 //@flow
-import { MongoClient, Db } from 'mongodb'
+import { MongoClient, Db, ObjectId } from 'mongodb'
 import invariant from 'invariant'
 
 import findRootKeys from './find-root-keys'
@@ -283,7 +283,7 @@ const domainMongo = async (
       async () => Promise.all(
         Array.from(rootKeys).map(async key => {
           debug('About to update (from rootKeys)', key)
-          return update(key)
+          return update(new ObjectId(key))
         })
       )
     )
