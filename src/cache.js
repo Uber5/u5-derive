@@ -4,16 +4,11 @@ import { ObjectId } from 'mongodb'
 const debug = require('debug')('u5-derive:cache')
 
 const load = (db, type) => keys => Promise.resolve(db.collection(type))
-.then(coll => Promise.all(
-  keys.map(key => coll.findOne({ _id: (key) }))
-))
+.then(coll => coll.find({ _id: { $in: keys } }).toArray())
 .then(docs => {
-  debug('cache, found docs for keys', type, keys, docs)
-  if (docs.length != keys.length) {
-    throw new Error(`load failed for '${ type }', keys=${ keys }, docs.length=${ docs.length }.`
-      + ' This probably means that (one of the) keys were not found in MongoDB.')
-  }
-  return docs
+  const map = {}
+  docs.forEach(doc => map[doc._id.toString()] = doc)
+  return keys.map(key => map[key.toString()])
 })
 
 class Cache {
