@@ -32,6 +32,9 @@ const findRootKeys = async (
 
   // TODO: we have to check if this type/instance._id has been visited already
 
+  if (!instance || typeof instance !== 'object') {
+    throw new Error(`findRootKeys, instance must be an object, type=${type}`)
+  }
   if (type === domain.root) {
     debug('Adding rootKey (1)', type, instance._id)
     rootKeys.add(instance._id.toString())
