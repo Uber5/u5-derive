@@ -46,7 +46,7 @@
     "debug": "2 || 3",
     "derivable": "0.12.1",
     "invariant": "2.2.2",
-    "mongo-oplog": "2.0.2",
+    "mongo-oplog": "^2.1.0",
     "ramda": ">= 0.23",
     "repl-promised": "0.1.0"
   },
