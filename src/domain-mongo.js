@@ -182,13 +182,15 @@ const wrapCollectionObj = (original, collName, state) => {
             enqueue(state)
             return result.then(async res => {
               debug(`insertOne done, insertedId:`, res.insertedId)
-              await findRootKeys(
-                state.domain,
-                state.db,
-                collName,
-                arguments[0],
-                state.rootKeysToUpdate
-              )
+              if (arguments[0]) {
+                await findRootKeys(
+                  state.domain,
+                  state.db,
+                  collName,
+                  arguments[0],
+                  state.rootKeysToUpdate
+                )
+              }
               dequeue(state)
               return res
             }).catch(err => { dequeue(state); throw err })

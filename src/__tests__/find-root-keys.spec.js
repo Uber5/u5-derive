@@ -43,6 +43,11 @@ describe('find root keys, given a document (type and instance) that supposedly w
         level2s: {}
       }
     }
+    it('fails when no instance given', async () => {
+      expect(
+        findRootKeys(domain, null /* db */, 'roots', null)
+      ).rejects.toThrow(/must be an object/)
+    })
     it('determines the root key(s)', async () => {
       const db = (await mongo).db()
       const [ roots, level1s, level2s ] = [ 'roots', 'level1s', 'level2s' ].map(
