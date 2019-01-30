@@ -27,7 +27,7 @@ const findRootKeys = async (
   db: Db,
   type: string,
   instance: Object,
-  rootKeys = new Set(): Set<string>
+  rootKeys = new Set()
 ): Set<string> => {
 
   // TODO: we have to check if this type/instance._id has been visited already
