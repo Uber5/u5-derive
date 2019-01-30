@@ -1,5 +1,5 @@
 import { map, sum, times, prop } from 'ramda'
-import { mongoUrl } from './config'
+import { mongoDb } from './config'
 import domainMongo from '../domain-mongo'
 
 /**
@@ -39,7 +39,7 @@ describe('domainMongo', () => {
   it('updateDomainNow works in a simple case', async () => {
     const db = await domainMongo({
       domain,
-      mongoUrl
+      mongoDb
     })
     const things = db.collection('things')
     const parts = db.collection('parts')
@@ -69,7 +69,7 @@ describe('domainMongo', () => {
   it('caches collection instances', async () => {
     const db = await domainMongo({
       domain,
-      mongoUrl
+      mongoDb
     })
     const things = db.collection('things')
     const thingsAgain = db.collection('things')
@@ -79,7 +79,7 @@ describe('domainMongo', () => {
   it('allows me to use the "collections" function', async () => {
     const db = await domainMongo({
       domain,
-      mongoUrl
+      mongoDb
     })
 
     const things = db.collection('things')
@@ -100,7 +100,7 @@ describe('domainMongo', () => {
     let db, thing, parts, Things, Parts
 
     beforeEach(async () => {
-      db = await domainMongo({ domain, mongoUrl })
+      db = await domainMongo({ domain, mongoDb })
       Things = db.collection('things')
       Parts = db.collection('parts')
       thing = { desc: 'simple domain and db state tests, ' + new Date() }

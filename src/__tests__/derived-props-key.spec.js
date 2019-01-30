@@ -1,5 +1,5 @@
 import { createDomain, domainMongo } from '..'
-import { mongoUrl } from './config'
+import { mongoDb } from './config'
 
 describe('Configurable key for derived props', () => {
   it('can be configured when creating the domain', async () => {
@@ -19,7 +19,7 @@ describe('Configurable key for derived props', () => {
       ],
       'customPropsKey'
     )
-    const mongoDomain = await domainMongo({ domain, mongoUrl })
+    const mongoDomain = await domainMongo({ domain, mongoDb })
     const things = mongoDomain.collection('things')
     const { insertedId } = await things.insertOne({ someData: 'blabla' })
     await mongoDomain.updateDomainNow()

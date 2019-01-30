@@ -234,12 +234,11 @@ const wrapCollectionFn = (db, state) => function () {
 }
 
 const domainMongo = async (
-  { domain, mongoUrl }: { domain: Domain, mongoUrl: string }
+  { domain, mongoDb }: { domain: Domain, mongoDb: Db }
 ): Db => {
   invariant(domain, 'argument is missing "domain" property.')
-  invariant(mongoUrl, 'argument is missing "mongoUrl" property.')
-  const mongoClient = await MongoClient.connect(mongoUrl)
-  const wrappedDb = mongoClient.db(/*mongoClient.s.options.dbName*/)
+  invariant(mongoDb, 'argument is missing "mongoDb" property ("mongoUrl" not supported any more, see ).')
+  const wrappedDb = await mongoDb
   const cache = new Cache(wrappedDb)
 
   const state = {
