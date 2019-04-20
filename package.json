@@ -11,7 +11,7 @@
     "build": "babel src --out-dir dist --source-maps --ignore \"**/__tests__/*.js\"",
     "prepublish": "npm run clean && npm test && mkdir -p dist && npm run build && npm run doc && flow-copy-source src dist",
     "clean": "rimraf dist",
-    "doc": "documentation build src -f html -o docs",
+    "doc": "echo 'documentation disabled for now' ; exit 0",
     "sample:simple": "node -r 'babel-register' ./samples/simple/index.js",
     "sample:clubs": "node -r 'babel-register' ./samples/clubs/index.js"
   },
