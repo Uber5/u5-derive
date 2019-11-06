@@ -6,7 +6,7 @@ import { MongoClient } from 'mongodb'
 const mongoUrl = process.env.MONGO_URL_TEST || `mongodb://localhost/u5-derive-test`
 
 // TODO: exports should be in ./test-setup.js or similar
-export const mongo = MongoClient.connect(mongoUrl)
+export const mongo = MongoClient.connect(mongoUrl).then(client => client.db())
 
 export const simplifiedInsert = (collection, doc) => mongo
   .then(db => db.collection(collection))
