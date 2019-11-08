@@ -40,8 +40,8 @@
     "debug": "2 || 3",
     "derivable": "0.12.1",
     "invariant": "2.2.2",
-    "mongo-oplog": "file:../../../mongo-oplog-2.1.4.tgz",
     "ramda": ">= 0.23",
-    "repl-promised": "0.1.0"
+    "repl-promised": "0.1.0",
+    "u5-mongo-oplog": "^1.0.0"
   }
 }
