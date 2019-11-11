@@ -6,7 +6,7 @@ import * as R from 'ramda'
 
 const mongoUrl = process.env.MONGO_URL_TEST || `mongodb://localhost/u5-derive-test`
 
-const mongo = MongoClient.connect(mongoUrl)
+const mongo = MongoClient.connect(mongoUrl).then(client => client.db())
 
 const simplifiedInsert = (collection, doc) => mongo
   .then(db => db.collection(collection))
