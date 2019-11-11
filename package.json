@@ -33,7 +33,7 @@
     "flow-bin": "0.58.0",
     "flow-copy-source": "^2.0.2",
     "jest": "^24.0.0",
-    "mongodb": "^3.1.1",
+    "mongodb": "^3.3.3",
     "regenerator-runtime": "0.11.0",
     "rimraf": "2.6.2",
     "source-map-support": "0.5.0",
@@ -47,9 +47,9 @@
     "debug": "2 || 3",
     "derivable": "0.12.1",
     "invariant": "2.2.2",
-    "mongo-oplog": "^2.1.0",
     "ramda": ">= 0.23",
-    "repl-promised": "0.1.0"
+    "repl-promised": "0.1.0",
+    "u5-mongo-oplog": "^1.0.0"
   },
   "jest": {
     "testURL": "http://localhost"
