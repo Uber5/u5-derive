@@ -1,4 +1,4 @@
-import MongoOplog from 'mongo-oplog'
+import MongoOplog from 'u5-mongo-oplog'
 
 const debug = require('debug')('u5-derive')
 
